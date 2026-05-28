@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식 단타 시뮬레이터 v4.1 (연출 및 UI 개선 완벽 적용판)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Noto+Sans+KR:wght(300;400;600;700;900)&display=swap');
+
+:root {
+  --bg:       #07090f;
+  --panel:    #0c0f1a;
+  --card:     #101422;
+  --border:   #1a2035;
+  --border2:  #222840;
+  --accent:   #4fc3f7;
+  --green:    #00e676;
+  --red:      #ff1744;
+  --yellow:   #ffd740;
+  --purple:   #ea80fc;
+  --text:     #cdd6f4;
+  --dim:      #4a5580;
+  --dim2:     #2a3350;
+  --mono:     'Share Tech Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+  --display:  'Bebas Neue', cursive;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+body::after {
+  content:''; position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 3px);
+  pointer-events:none; z-index:1000;
+}
+
+/* HEADER */
+#header {
+  z-index:10; display:flex; align-items:center; gap:0; padding:0 20px;
+  height:52px; border-bottom:1px solid var(--border);
+  background: rgba(12,15,26,0.97); backdrop-filter:blur(12px); flex-shrink:0;
+}
+#logo {
+  font-family: var(--display); font-size:22px; letter-spacing:3px; color: var(--accent);
+  text-shadow: 0 0 20px rgba(79,195,247,0.5); margin-right:20px; white-space:nowrap;
+}
+#header-divider { width:1px; height:28px; background: var(--border2); margin-right:20px; }
+
+.h-stat { display:flex; flex-direction:column; align-items:flex-start; margin-right:24px; }
+.h-stat-label { font-family: var(--mono); font-size:9px; letter-spacing:2px; color: var(--dim); text-transform:uppercase; }
+.h-stat-value { font-family: var(--mono); font-size:18px; line-height:1.1; transition: color .3s, text-shadow .3s; }
+#price-el    { color: var(--text); }
+#returns-el  { color: var(--text); }
+#assets-el   { color: var(--accent); text-shadow: 0 0 16px rgba(79,195,247,0.4); }
+#principal-el { color: var(--text); opacity: 0.9; } /* 추가된 원금 텍스트 */
+#leverage-el { color: var(--yellow); }
+
+.h-stat-value.up   { color: var(--green) !important; text-shadow: 0 0 14px rgba(0,230,118,0.5) !important; }
+.h-stat-value.dn   { color: var(--red)   !important; text-shadow: 0 0 14px rgba(255,23,68,0.4) !important; }
+
+#live-wrap {
+  margin-left:auto; display:flex; align-items:center; gap:6px;
+  font-family: var(--mono); font-size:10px; letter-spacing:2px; color: var(--dim);
+}
+#live-dot {
+  width:7px; height:7px; border-radius:50%; background: var(--green);
+  box-shadow: 0 0 8px var(--green); animation: blink 1.1s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* CHART */
+#chart-wrap { flex:1; position:relative; z-index:5; overflow:hidden; min-height:0; }
+#chart { display:block; width:100%; height:100%; }
+
+/* BOTTOM PANEL */
+#bottom {
+  z-index:10; display:flex; align-items:stretch; gap:12px; padding:12px 20px 14px;
+  border-top:1px solid var(--border); background: rgba(12,15,26,0.98); flex-shrink:0;
+}
+.btn-trade {
+  flex:1; padding:16px 0; font-family: var(--mono); font-size:14px; letter-spacing:3px;
+  border:none; cursor:pointer; text-transform:uppercase; position:relative; overflow:hidden;
+  transition: all .15s; clip-path: polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+}
+.btn-trade:active { transform:scale(.97); }
+.btn-trade:disabled { opacity:.2; cursor:not-allowed; transform:none !important; }
+
+#btn-buy { background: rgba(0,230,118,0.09); color: var(--green); border:1px solid rgba(0,230,118,0.28); }
+#btn-buy:hover:not(:disabled) { background: rgba(0,230,118,0.18); box-shadow: 0 0 28px rgba(0,230,118,0.25); }
+#btn-buy.lock-disabled {
+  background: rgba(0, 230, 118, 0.03) !important; color: var(--green) !important;
+  border: 1px solid rgba(0, 230, 118, 0.1) !important; opacity: 0.35 !important; cursor: not-allowed !important;
+}
+#btn-sell { background: rgba(255,23,68,0.09); color: var(--red); border:1px solid rgba(255,23,68,0.28); }
+#btn-sell:hover:not(:disabled) { background: rgba(255,23,68,0.18); box-shadow: 0 0 28px rgba(255,23,68,0.25); }
+
+#hold-strip {
+  display:flex; align-items:center; gap:16px; padding:0 16px; background: rgba(255,215,64,0.05);
+  border:1px solid rgba(255,215,64,0.15); border-radius:4px; min-width:200px; opacity:0; transition:opacity .4s;
+}
+#hold-strip.visible { opacity:1; }
+.hs-item { display:flex; flex-direction:column; align-items:flex-start; }
+.hs-label { font-family:var(--mono); font-size:8px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+.hs-val   { font-family:var(--mono); font-size:13px; color:var(--yellow); }
+
+/* NEWS BANNER */
+#news-banner {
+  position:fixed; top: 60px; left:50%; transform:translateX(-50%) translateY(-120px); z-index:500;
+  width:min(640px, 92vw); border-radius:6px; backdrop-filter:blur(16px);
+  transition: transform .45s cubic-bezier(.34,1.4,.64,1), opacity .4s; opacity:0; pointer-events:none;
+}
+#news-banner.show { transform: translateX(-50%) translateY(0); opacity:1; }
+
+#news-body { position: relative; z-index: 3; padding:16px 22px; border-radius:6px; width: 100%; }
+#news-banner.bull #news-body { background: rgba(0,20,10,0.95); border:1px solid rgba(0,230,118,0.5); box-shadow: 0 8px 48px rgba(0,230,118,0.25), 0 0 0 1px rgba(0,230,118,0.1); }
+#news-banner.bear #news-body { background: rgba(20,5,8,0.95); border:1px solid rgba(255,23,68,0.5); box-shadow: 0 8px 48px rgba(255,23,68,0.25), 0 0 0 1px rgba(255,23,68,0.1); }
+
+#news-tag { font-family: var(--mono); font-size:10px; letter-spacing:3px; text-transform:uppercase; margin-bottom:6px; }
+.bull #news-tag { color: var(--green); } .bear #news-tag { color: var(--red); }
+#news-headline { font-size:15px; font-weight:700; line-height:1.4; color: var(--text); }
+#news-effect { font-family: var(--mono); font-size:11px; margin-top:6px; opacity:.7; }
+.bull #news-effect { color: var(--green); } .bear #news-effect { color: var(--red); }
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:90px; left:50%; transform: translateX(-50%) translateY(20px); z-index:600; font-family: var(--mono); font-size:20px;
+  letter-spacing:2px; padding:14px 40px 12px; border:1px solid; text-align:center; opacity:0; pointer-events:none; transition: all .25s cubic-bezier(.34,1.4,.64,1);
+  backdrop-filter:blur(12px); clip-path: polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+}
+#toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+#toast.profit { color:var(--green); border-color:rgba(0,230,118,.5); background:rgba(0,230,118,.08); box-shadow:0 0 40px rgba(0,230,118,.2); }
+#toast.loss   { color:var(--red);   border-color:rgba(255,23,68,.5);  background:rgba(255,23,68,.08);  box-shadow:0 0 40px rgba(255,23,68,.2);  }
+#toast-sub { font-size:12px; opacity:.8; margin-top:4px; letter-spacing:1px; }
+
+/* FLASH */
+#flash { position:fixed; inset:0; pointer-events:none; z-index:300; opacity:0; transition:opacity .12s; }
+
+/* SHOP SYSTEM */
+#shop-btn {
+  position:fixed; right:20px; bottom:80px; width:56px; height:56px; border-radius:50%; border:none; cursor:pointer; z-index:200;
+  background: linear-gradient(135deg,#1a2a4a,#0d1a30); border:1.5px solid rgba(79,195,247,0.4);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 20px rgba(79,195,247,0.15); font-size:24px; display:flex;align-items:center;justify-content:center; transition: all .2s;
+}
+#shop-btn:hover { transform:scale(1.1); box-shadow: 0 6px 32px rgba(0,0,0,0.6), 0 0 32px rgba(79,195,247,0.35); border-color: rgba(79,195,247,0.7); }
+#shop-btn:active { transform:scale(.95); }
+
+#shop-overlay { position:fixed; inset:0; z-index:400; background: rgba(0,0,0,0.7); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .3s; }
+#shop-overlay.open { opacity:1; pointer-events:all; }
+
+/* 수정 1. 샵 모달 위치 화면 중앙 정렬 및 반응형 사이즈 조정 */
+#shop-modal {
+  position: absolute; top: 50%; left: 50%; width: 380px; max-width: 92vw; max-height: 80vh; 
+  background: var(--card); border: 1px solid var(--border2); border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(79,195,247,0.06); 
+  transform: translate(-50%, -50%) scale(0.92); 
+  transition: transform .35s cubic-bezier(.34,1.4,.64,1), opacity .3s; opacity: 0; 
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#shop-overlay.open #shop-modal { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+#shop-header { display:flex; flex-direction:column; border-bottom:1px solid var(--border); flex-shrink: 0; }
+.shop-header-top { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 10px; }
+#shop-title { font-family: var(--display); font-size:20px; letter-spacing:3px; color: var(--accent); }
+#shop-close { width:28px;height:28px;border-radius:50%; background:var(--border);border:none; color:var(--dim);font-size:16px;cursor:pointer; display:flex;align-items:center;justify-content:center; transition:all .15s; }
+#shop-close:hover { background:var(--border2); color:var(--text); }
+
+/* TABS */
+.shop-tabs { display:flex; gap:0; padding:0 18px; margin-bottom: 8px; }
+.shop-tab {
+  flex:1; background:transparent; border:none; color:var(--dim); font-size:12px; font-weight:700;
+  padding:10px 0; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s;
+}
+.shop-tab.active { color:var(--text); border-bottom-color:var(--accent); text-shadow: 0 0 10px rgba(79,195,247,0.5); }
+
+#shop-cash { padding:10px 18px; background:rgba(79,195,247,0.05); border-bottom:1px solid var(--border); font-family:var(--mono); font-size:11px; color:var(--dim); display:flex;gap:6px;align-items:center; flex-shrink: 0; }
+#shop-cash-val { color:var(--accent); font-size:14px; }
+#shop-items { padding:12px; display:flex; flex-direction:column; gap:8px; flex: 1; overflow-y:auto; } /* 스크롤 개선 */
+#shop-items::-webkit-scrollbar { width:4px; }
+#shop-items::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+.shop-item { background: rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:12px 14px; transition: all .2s; position:relative; }
+.item-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.item-icon { font-size:24px; flex-shrink:0; text-align:center; width: 32px; }
+.item-info { flex:1; min-width:0; }
+.item-name { font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px; display: flex; align-items: center; gap: 6px; }
+.item-desc { font-size:11px; color:var(--dim); line-height:1.4; }
+.item-buy-btn { font-family:var(--mono); font-size:11px; padding:8px 12px; border:none; border-radius:4px; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .15s; letter-spacing:1px; position:relative; overflow:hidden; min-width: 65px;}
+.item-buy-btn.yellow-btn { background:rgba(255,215,64,0.1); color:var(--yellow); border:1px solid rgba(255,215,64,0.25); }
+.item-buy-btn.yellow-btn:hover:not(:disabled) { background:rgba(255,215,64,0.2); }
+.item-buy-btn:disabled { opacity:.4; cursor:not-allowed; }
+.item-price { font-family:var(--mono); font-size:11px; color:var(--yellow); margin-top:4px; }
+
+#lev-badge {
+  position:absolute; top:10px;left:12px; z-index:20; font-family:var(--mono); font-size:11px; letter-spacing:2px; color:var(--yellow);
+  background:rgba(255,215,64,0.1); border:1px solid rgba(255,215,64,0.25); padding:3px 8px; border-radius:3px; opacity:0; transition:opacity .3s;
+}
+#lev-badge.visible { opacity:1; }
+
+/* ── DEPARTMENT UPGRADE SYSTEM CSS ── */
+.level-badge { background: #222840; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 900; }
+.prob-text { font-size: 10px; color: var(--accent); margin-top: 4px; font-weight: 600;}
+
+/* Tier 0 (0강) */
+.tier-0 { border-color: #222840; }
+/* Tier 1-2 (1~2강: Bronze) */
+.tier-1, .tier-2 { border-color: #cd7f32; box-shadow: 0 0 8px rgba(205, 127, 50, 0.2); }
+.tier-1 .level-badge, .tier-2 .level-badge { background: #cd7f32; color: #fff; }
+/* Tier 3 (3강: Gold) */
+.tier-3 { border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.3); }
+.tier-3 .level-badge { background: #ffd700; color: #000; text-shadow: none; }
+/* Tier 4 (4강: Shine Gold) */
+.tier-4 { border: 1.5px solid #ffdf00; box-shadow: 0 0 20px rgba(255, 223, 0, 0.4); overflow: hidden; }
+.tier-4 .level-badge { background: #ffdf00; color: #000; }
+.tier-4::after {
+  content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(30deg); animation: shine 2.5s infinite; pointer-events: none;
+}
+@keyframes shine { 0% { transform: translateX(-100%) rotate(30deg); } 100% { transform: translateX(100%) rotate(30deg); } }
+/* Tier 5 (5강: Cyber Purple Neon) */
+.tier-5 {
+  border: 1.5px solid var(--purple); background: rgba(234, 128, 252, 0.05);
+  animation: neonPulse 1.5s infinite alternate;
+}
+.tier-5 .level-badge { background: var(--purple); color: #000; box-shadow: 0 0 10px var(--purple); }
+.tier-5 .item-buy-btn { opacity: 0; pointer-events: none; }
+@keyframes neonPulse {
+  from { box-shadow: 0 0 10px rgba(234, 128, 252, 0.4), inset 0 0 5px rgba(234, 128, 252, 0.2); }
+  to { box-shadow: 0 0 25px rgba(234, 128, 252, 0.8), inset 0 0 15px rgba(234, 128, 252, 0.4); border-color: #f50057; }
+}
+
+/* 수정 2. 강화 이펙트: 떨림, 흐려짐, 펑(Flash) 연출 애니메이션 */
+@keyframes upgradeTension {
+  0% { transform: translate(0, 0); filter: blur(0px) brightness(1); }
+  10% { transform: translate(-2px, 1px); filter: blur(0.5px) brightness(0.9); }
+  20% { transform: translate(2px, -1px); filter: blur(1px) brightness(1.1); }
+  30% { transform: translate(-3px, 2px); filter: blur(1.5px) brightness(0.8); }
+  40% { transform: translate(3px, -2px); filter: blur(2px) brightness(1.2); }
+  50% { transform: translate(-4px, 3px); filter: blur(2.5px) brightness(0.7); }
+  60% { transform: translate(4px, -3px); filter: blur(3px) brightness(1.3); }
+  70% { transform: translate(-3px, 2px); filter: blur(3.5px) brightness(0.6); }
+  80% { transform: translate(3px, -2px); filter: blur(4px) brightness(1.4); }
+  90% { transform: translate(-1px, 1px); filter: blur(2px) brightness(2.5); }
+  100% { transform: translate(0, 0); filter: blur(0px) brightness(4); } /* 마지막 순간 확 밝아짐 */
+}
+.item-upgrading {
+  animation: upgradeTension 1.5s cubic-bezier(.36,.07,.19,.97) forwards;
+  pointer-events: none; /* 클릭 방지 */
+}
+
+/* ── SHAKE EFFECTS ── */
+@keyframes bearShake {
+  0% { transform: translate(0, 0) rotate(0deg); } 20% { transform: translate(-6px, -4px) rotate(-1deg); }
+  40% { transform: translate(8px, -4px) rotate(1deg); } 60% { transform: translate(-5px, 6px) rotate(-1deg); }
+  80% { transform: translate(5px, 4px) rotate(1deg); } 100% { transform: translate(0, 0) rotate(0deg); }
+}
+#chart-wrap.shake { animation: bearShake 0.42s ease-out; }
+
+/* 하드코어 실패/청산 쉐이크 (전체 화면) */
+@keyframes hardFailureShake {
+  0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
+  10% { transform: translate(-15px, -15px) scale(1.02); filter: hue-rotate(-20deg) contrast(1.5); }
+  20% { transform: translate(15px, 15px) scale(0.98); }
+  30% { transform: translate(-20px, 10px) scale(1.03); }
+  40% { transform: translate(20px, -15px) scale(0.97); }
+  50% { transform: translate(-10px, 20px) scale(1.02); }
+  60% { transform: translate(10px, -20px) scale(0.98); }
+  70% { transform: translate(-15px, 5px) scale(1.01); }
+  80% { transform: translate(15px, -5px) scale(0.99); }
+  90% { transform: translate(-5px, 10px) scale(1); }
+  100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) contrast(1); }
+}
+body.hard-shake { animation: hardFailureShake 0.6s cubic-bezier(.36,.07,.19,.97) both; background: #1a0505; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="logo">STONKS</div>
+  <div id="header-divider"></div>
+  <div class="h-stat"><div class="h-stat-label">현재가</div><div class="h-stat-value" id="price-el">10,000</div></div>
+  <div class="h-stat"><div class="h-stat-label">실시간 수익률</div><div class="h-stat-value" id="returns-el">—</div></div>
+  <div class="h-stat"><div class="h-stat-label">총 자산</div><div class="h-stat-value" id="assets-el">100,000</div></div>
+  
+  <div class="h-stat" id="principal-stat" style="display: none;">
+    <div class="h-stat-label">투자 원금</div>
+    <div class="h-stat-value" id="principal-el">—</div>
+  </div>
+
+  <div class="h-stat"><div class="h-stat-label">배율</div><div class="h-stat-value" id="leverage-el">×1</div></div>
+  <div id="live-wrap"><div id="live-dot"></div>LIVE</div>
+</div>
+
+<div id="chart-wrap">
+  <canvas id="chart"></canvas>
+  <div id="lev-badge">LEV ×1</div>
+</div>
+
+<div id="bottom">
+  <button class="btn-trade" id="btn-buy">▲ 전액 매수</button>
+  <div id="hold-strip">
+    <div class="hs-item"><div class="hs-label">평균단가</div><div class="hs-val" id="hs-avg">—</div></div>
+    <div class="hs-item"><div class="hs-label">수량</div><div class="hs-val" id="hs-qty">—</div></div>
+    <div class="hs-item"><div class="hs-label">평가금</div><div class="hs-val" id="hs-eval">—</div></div>
+  </div>
+  <button class="btn-trade" id="btn-sell" disabled>▼ 전액 매도</button>
+</div>
+
+<div id="news-banner">
+  <div id="news-body">
+    <div id="news-tag">📰 긴급 뉴스</div>
+    <div id="news-headline">헤드라인</div>
+    <div id="news-effect">▲ 강세 효과 발동 중...</div>
+  </div>
+</div>
+
+<div id="toast"><div id="toast-main"></div><div id="toast-sub"></div></div>
+<div id="flash"></div>
+<button id="shop-btn" title="상점">🛒</button>
+
+<div id="shop-overlay">
+  <div id="shop-modal">
+    <div id="shop-header">
+      <div class="shop-header-top">
+        <div id="shop-title">SHOP</div>
+        <button id="shop-close">✕</button>
+      </div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-target="general">일반 아이템</button>
+        <button class="shop-tab" data-target="depts" style="color:var(--accent);">🔥 부서 강화</button>
+      </div>
+    </div>
+    <div id="shop-cash">보유 현금: <span id="shop-cash-val">100,000원</span></div>
+    <div id="shop-items"></div>
+  </div>
+</div>
+
+<script>
+const G = {
+  cash:      100000,
+  shares:    0,
+  avgPrice:  0,
+  price:     10000,
+  history:   [],
+  maxHist:   120,
+  leverage:      1, // ⚡ 상품의 레버리지 배수 (2배, 3배 등)
+  bullBonus:     0,
+  newsActive:    false,
+  newsIsBull:    false,
+  newsTicksLeft: 0,
+  newsMaxTicks:  0,
+  baseBullProb:  0.52,
+  buyLockoutActive: false,
+  sellLockoutActive: false,
+  isUpgrading: false,
+
+  depts: {
+    marketing: 0,
+    rnd: 0,
+    risk: 0,
+    insider: 0
+  }
+};
+
+const LEV_TIERS = [
+  { lev:2, price:50000,   label:'×2 레버리지 상품 권한' },
+  { lev:3, price:100000,  label:'×3 레버리지 상품 권한' },
+  { lev:4, price:200000,  label:'×4 레버리지 상품 권한' },
+  { lev:5, price:400000,  label:'×5 레버리지 상품 권한' },
+];
+
+const BULL_NEWS = [
+  { headline:'정부, 대규모 반도체 투자 지원 패키지 발표 — 코스피 일제히 급등',       effect:'▲ 강세 효과 발동 중' },
+  { headline:'미 연준, 예상 밖 금리 인하 결정 — 글로벌 증시 환호',                  effect:'▲ 강세 효과 발동 중' },
+  { headline:'워런 버핏, 한국 시장에 수십조 매수 포지션 진입 포착',                  effect:'▲ 강세 효과 발동 중' },
+  { headline:'AI 슈퍼사이클 본격화 — 기술주 밸류에이션 재평가 시작',                 effect:'▲ 강세 효과 발동 중' },
+];
+
+const BEAR_NEWS = [
+  { headline:'美 CPI 예상치 대폭 상회 — 금리 인상 공포 재부상',                    effect:'▼ 약세 효과 발동 중' },
+  { headline:'중국발 금융위기 경고 — 리먼 사태 재현 우려',                         effect:'▼ 약세 효과 발동 중' },
+  { headline:'대주주 지분 전량 매각 공시 — 내부자 이탈 신호',                      effect:'▼ 약세 효과 발동 중' },
+  { headline:'회계 부정 혐의 포착 — 감사의견 거절 임박',                           effect:'▼ 약세 효과 발동 중' },
+];
+
+const UPGRADE_COSTS = [30000, 100000, 300000, 1000000, 3000000];
+const UPGRADE_PROBS = [1.0, 0.8, 0.6, 0.4, 0.2];
+
+const DEPT_INFO = {
+  marketing: { icon: '📢', name: '글로벌 마케팅팀', desc: '뉴스 대기시간 10%씩 감소 & 호재 확률 레벨당 +4% 증가' },
+  rnd:       { icon: '🧪', name: '미래기술 R&D',    desc: '호재 발생 시 주가 펌핑 상한선 증가' },
+  risk:      { icon: '⚖️', name: '리스크 관리실',   desc: '악재 발생 시 폭락 피해 경감' },
+  insider:   { icon: '💰', name: '내부자 운용팀',   desc: '평상시 주가 우상향 확률 증가' }
+};
+
+const canvas = document.getElementById('chart');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const w = document.getElementById('chart-wrap');
+  canvas.width  = w.clientWidth; canvas.height = w.clientHeight;
+}
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+/* ENGINE */
+function nextPrice(p) {
+  if (G.newsActive && G.newsTicksLeft > 0) {
+    let force = 0;
+    if (G.newsIsBull) {
+      const maxBonus = G.depts.rnd * 0.005; 
+      force = G.buyLockoutActive
+        ? (0.03 + Math.random() * (0.03 + maxBonus))
+        : (0.0068 + Math.random() * (0.0102 + maxBonus));
+    } else {
+      const riskMitigation = 1 - (G.depts.risk * 0.12);
+      force = (G.newsTicksLeft === G.newsMaxTicks)
+        ? -(0.10 + Math.random() * 0.10) * riskMitigation
+        : -(0.008 + Math.random() * 0.012) * riskMitigation;
+    }
+    G.newsTicksLeft--;
+    if (G.newsTicksLeft === 0) G.newsActive = false;
+    return Math.round(Math.max(100, Math.min(p * (1 + force), 9999999)));
+  }
+  
+  const insiderBias = G.depts.insider * 0.003;
+  const drift = (Math.random() - (0.48 - insiderBias)) * 0.022;
+  const shock = Math.random() < 0.06 ? (Math.random() - 0.5) * 0.055 : 0;
+  return Math.round(Math.max(100, Math.min(p * (1 + drift + shock), 9999999)));
+}
+
+G.history = [10000];
+for (let i = 1; i < G.maxHist; i++) G.history.push(nextPrice(G.history[i-1]));
+G.price = G.history[G.history.length - 1];
+
+/* RENDER */
+function drawChart() {
+  const W = canvas.width, H = canvas.height; ctx.clearRect(0, 0, W, H);
+  const data = G.history; if (data.length < 2) return;
+
+  const min = Math.min(...data) * 0.96; const max = Math.max(...data) * 1.04;
+  const rng = max - min || 1; const pad = {t:36, b:28, l:8, r:64};
+  const cW  = W - pad.l - pad.r, cH  = H - pad.t - pad.b;
+  const toX = i => pad.l + (i / (G.maxHist - 1)) * cW;
+  const toY = v => pad.t + cH - ((v - min) / rng) * cH;
+  const off = G.maxHist - data.length;
+
+  ctx.fillStyle = '#2a3a5a'; ctx.font = '9px Share Tech Mono,monospace'; ctx.textAlign = 'left';
+  for (let g = 0; g <= 4; g++) {
+    const y = pad.t + (g / 4) * cH;
+    ctx.strokeStyle = 'rgba(26,32,53,0.9)'; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r + 4, y); ctx.stroke();
+    ctx.fillText(Math.round(max - (g / 4) * rng).toLocaleString(), W - pad.r + 8, y + 3);
+  }
+
+  if (G.shares > 0 && G.avgPrice > 0) {
+    const ay = toY(G.avgPrice);
+    ctx.strokeStyle = 'rgba(255,215,64,0.55)'; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(pad.l, ay); ctx.lineTo(W - pad.r, ay); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#ffd740'; ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
+  }
+
+  const isUp = data[data.length - 1] >= data[0];
+  const lineClr = isUp ? '#00e676' : '#ff1744';
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+  grad.addColorStop(0, isUp ? 'rgba(0,230,118,0.2)' : 'rgba(255,23,68,0.18)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.01)');
+
+  ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
+  for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
+  ctx.lineTo(toX(off + data.length - 1), H - pad.b); ctx.lineTo(toX(off), H - pad.b); ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
+  for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
+  ctx.strokeStyle = lineClr; ctx.lineWidth = 2; ctx.stroke();
+
+  const dx = toX(off + data.length - 1), dy = toY(data[data.length-1]);
+  ctx.beginPath(); ctx.arc(dx, dy, 5, 0, Math.PI*2); ctx.fillStyle = lineClr; ctx.fill();
+}
+
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+
+/* ⚡ 핵심 수식 처리 파트 */
+function getLeveragedData() {
+  if (G.shares <= 0 || G.avgPrice <= 0) return { pct: 0, currentEval: 0 };
+  
+  // 1. 순수 주가의 기초 변동률 계산
+  const rawPct = ((G.price - G.avgPrice) / G.avgPrice * 100);
+  
+  // 2. 레버리지 배수를 적용하여 실시간 최종 상품 수익률 증폭
+  const pct = rawPct * G.leverage;
+  
+  // 3. 내 순수 투자 원금 계산
+  const principal = G.shares * G.avgPrice;
+  
+  // 4. 배수가 적용된 수익률을 기준으로 실시간 평가금 도출
+  const currentEval = principal * (1 + (pct / 100));
+  
+  return { pct, currentEval };
+}
+
+function updateUI() {
+  document.getElementById('price-el').textContent = fmt(G.price) + '원';
+  
+  const levData = getLeveragedData();
+  
+  // ⭐ 총 자산 업데이트
+  const totalAssets = G.cash + (G.shares > 0 ? Math.max(0, levData.currentEval) : 0);
+  document.getElementById('assets-el').textContent = fmt(totalAssets) + '원';
+  
+  // 수정 3. 투자 원금 헤더 업데이트 로직
+  const principalStat = document.getElementById('principal-stat');
+  if (G.shares > 0) {
+    principalStat.style.display = 'flex';
+    const principal = G.shares * G.avgPrice;
+    document.getElementById('principal-el').textContent = fmt(principal) + '원';
+  } else {
+    principalStat.style.display = 'none';
+  }
+
+  const returnsEl = document.getElementById('returns-el');
+  if (G.shares > 0) {
+    // ⭐ 화면에 레버리지 배수가 곱해진 최종 수익률을 즉시 표기
+    returnsEl.textContent = (levData.pct >= 0 ? '+' : '') + levData.pct.toFixed(2) + '%';
+    returnsEl.className = 'h-stat-value ' + (levData.pct >= 0 ? 'up' : 'dn');
+  } else {
+    returnsEl.textContent = '—'; returnsEl.className = 'h-stat-value';
+  }
+  
+  document.getElementById('leverage-el').textContent = '×' + G.leverage;
+  const strip = document.getElementById('hold-strip');
+  if (G.shares > 0) {
+    strip.classList.add('visible');
+    document.getElementById('hs-avg').textContent  = fmt(G.avgPrice) + '원';
+    document.getElementById('hs-qty').textContent  = G.shares.toFixed(4) + '주';
+    document.getElementById('hs-eval').textContent = fmt(Math.max(0, levData.currentEval)) + '원';
+  } else strip.classList.remove('visible');
+
+  document.getElementById('shop-cash-val').textContent = fmt(G.cash) + '원';
+  const levBadge = document.getElementById('lev-badge');
+  if (G.leverage > 1) { levBadge.textContent = 'LEV ×' + G.leverage; levBadge.classList.add('visible'); }
+  else levBadge.classList.remove('visible');
+
+  const buyBtn = document.getElementById('btn-buy');
+  if (G.buyLockoutActive) { buyBtn.disabled = true; buyBtn.classList.add('lock-disabled'); }
+  else if (G.cash <= 0) { buyBtn.disabled = true; buyBtn.classList.remove('lock-disabled'); }
+  else { buyBtn.disabled = false; buyBtn.classList.remove('lock-disabled'); }
+  
+  if (!G.isUpgrading) renderShopItems();
+}
+
+/* ACTIONS */
+document.getElementById('btn-buy').addEventListener('click', () => {
+  if (G.cash <= 0 || G.buyLockoutActive) return;
+  
+  // ⚡ 원금 그대로 정직하게 수량을 구매함 (빚 없음)
+  G.shares = G.cash / G.price; 
+  G.avgPrice = G.price; 
+  G.cash = 0;
+  
+  document.getElementById('btn-buy').disabled = true; document.getElementById('btn-sell').disabled = false;
+  flash('rgba(0,230,118,0.15)'); 
+  showToast('▲ 매수 체결', `@ ${fmt(G.avgPrice)}원 (LEV ×${G.leverage} 상품)`, 'profit'); 
+  updateUI();
+});
+
+document.getElementById('btn-sell').addEventListener('click', () => {
+  if (G.shares <= 0 || G.sellLockoutActive) return;
+  
+  const levData = getLeveragedData();
+  const principal = G.shares * G.avgPrice; // 내 원금
+  const pnl = levData.currentEval - principal; // 최종 정산된 순수익/순손실
+  
+  // ⚡ 배수가 깔끔하게 입혀진 최종 평가금 전액을 현금으로 정산받음
+  G.cash = Math.max(0, levData.currentEval); 
+  G.shares = 0; 
+  G.avgPrice = 0; 
+  
+  document.getElementById('btn-buy').disabled = false; document.getElementById('btn-sell').disabled = true;
+  flash(pnl >= 0 ? 'rgba(0,230,118,0.15)' : 'rgba(255,23,68,0.12)');
+  
+  // 수정 4. 매도 알림(토스트)의 지속시간을 5000ms(5초)로 2배 연장
+  showToast(pnl >= 0 ? '▲ 실현 이익' : '▼ 실현 손실', `${fmt(pnl)}원`, pnl >= 0 ? 'profit' : 'loss', 5000); 
+  updateUI();
+});
+
+let toastTmr = null;
+// 수정 4를 위해 파라미터(duration) 추가
+function showToast(main, sub, type, duration = 2500) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-main').textContent = main; document.getElementById('toast-sub').textContent = sub;
+  el.className = 'show ' + type; if (toastTmr) clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => { el.className = ''; }, duration);
+}
+
+function flash(clr) {
+  const el = document.getElementById('flash'); el.style.background = clr; el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 180);
+}
+
+/* NEWS SYS */
+let newsTimer = null;
+function scheduleNews() { 
+  const timeReduction = Math.pow(0.90, G.depts.marketing);
+  const baseTime = 18000;
+  const randTime = 15000;
+  newsTimer = setTimeout(triggerNews, (baseTime + Math.random() * randTime) * timeReduction); 
+}
+
+let newsHideTimer = null;
+function triggerNews() {
+  const banner = document.getElementById('news-banner'); 
+  const marketingBullBonus = G.depts.marketing * 0.04;
+  const finalBullProb = Math.min(1.0, G.baseBullProb + G.bullBonus + marketingBullBonus);
+  
+  const isBull = Math.random() < finalBullProb;
+  const pool = isBull ? BULL_NEWS : BEAR_NEWS;
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  G.newsActive = true; G.newsIsBull = isBull; G.newsTicksLeft = 7 + Math.floor(Math.random() * 3); G.newsMaxTicks = G.newsTicksLeft;
+
+  if (!isBull) {
+    G.sellLockoutActive = true;
+    document.getElementById('btn-sell').disabled = true;
+    setTimeout(() => {
+      G.sellLockoutActive = false;
+      if (G.shares > 0) document.getElementById('btn-sell').disabled = false;
+      updateUI();
+    }, 500);
+    const cw = document.getElementById('chart-wrap');
+    cw.classList.remove('shake'); void cw.offsetWidth; cw.classList.add('shake');
+    setTimeout(() => cw.classList.remove('shake'), 450);
+  }
+
+  if (isBull) { G.buyLockoutActive = true; setTimeout(() => { G.buyLockoutActive = false; updateUI(); }, 4500); }
+  document.getElementById('news-tag').textContent = isBull ? '📈 호재 뉴스' : '📉 악재 뉴스';
+  document.getElementById('news-headline').textContent = item.headline;
+  document.getElementById('news-effect').textContent = isBull ? '▲ 강세 효과 발동 중...' : item.effect;
+  banner.className = 'show ' + (isBull ? 'bull' : 'bear');
+  updateUI();
+
+  if(newsHideTimer) clearTimeout(newsHideTimer);
+  newsHideTimer = setTimeout(() => { banner.className = ''; scheduleNews(); }, 7000);
+}
+
+/* SHOP INTERACTION */
+let shopOpen = false, shopState = { levIndex: 0, partnerBought: false, tab: 'general' };
+function openShop()  { shopOpen=true; document.getElementById('shop-overlay').classList.add('open'); renderShopItems(); }
+function closeShopAction() { document.getElementById('shop-overlay').classList.remove('open'); shopOpen=false; }
+document.getElementById('shop-btn').addEventListener('click', () => shopOpen ? closeShopAction() : openShop());
+document.getElementById('shop-close').addEventListener('click', closeShopAction);
+
+document.querySelectorAll('.shop-tab').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    shopState.tab = e.target.dataset.target;
+    renderShopItems();
+  });
+});
+
+function renderShopItems() {
+  const container = document.getElementById('shop-items'); container.innerHTML = '';
+  
+  if (shopState.tab === 'general') {
+    const nextTier = LEV_TIERS[shopState.levIndex];
+    const levItem  = document.createElement('div'); levItem.className = 'shop-item';
+    if (nextTier) {
+      levItem.innerHTML = `<div class="item-row"><div class="item-icon">⚡</div><div class="item-info"><div class="item-name">${nextTier.label}</div><div class="item-desc">현재 취급 상품: ×${G.leverage} 배율</div><div class="item-price">💰 ${fmt(nextTier.price)}원</div></div><button class="item-buy-btn yellow-btn" id="buy-lev" ${G.cash>=nextTier.price?'':'disabled'}>구매</button></div>`;
+      levItem.querySelector('#buy-lev').addEventListener('click', () => { G.cash -= nextTier.price; G.leverage = nextTier.lev; shopState.levIndex++; updateUI(); closeShopAction(); });
+    } else levItem.innerHTML = `<div class="item-row"><div class="item-icon">⚡</div><div class="item-info"><div class="item-name">레버리지 MAX</div></div><button class="item-buy-btn yellow-btn" disabled>완료</button></div>`;
+    container.appendChild(levItem);
+
+    const boostItem = document.createElement('div'); boostItem.className = 'shop-item';
+    if (shopState.partnerBought) boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">파트너십 완료</div></div><button class="item-buy-btn green-btn" disabled>보유중</button></div>`;
+    else {
+      boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">기업 파트너십</div><div class="item-price">💰 80,000원</div></div><button class="item-buy-btn green-btn" id="buy-boost" ${G.cash>=80000?'':'disabled'}>구매</button></div>`;
+      boostItem.querySelector('#buy-boost').addEventListener('click', () => { G.cash -= 80000; G.bullBonus += 0.15; shopState.partnerBought = true; updateUI(); closeShopAction(); });
+    }
+    container.appendChild(boostItem);
+  } else {
+    Object.keys(DEPT_INFO).forEach(key => {
+      const info = DEPT_INFO[key];
+      const level = G.depts[key];
+      const itemEl = document.createElement('div');
+      itemEl.className = `shop-item tier-${level}`;
+      
+      let rightBtnHtml = '';
+      if (level < 5) {
+        const cost = UPGRADE_COSTS[level];
+        const probPct = UPGRADE_PROBS[level] * 100;
+        rightBtnHtml = `<div style="display:flex; flex-direction:column; align-items:flex-end;">
+          <button class="item-buy-btn yellow-btn" id="upg-${key}" ${G.cash>=cost?'':'disabled'}>시도 (💰${fmt(cost)})</button>
+          <div class="prob-text">성공률: ${probPct}%</div>
+        </div>`;
+      } else {
+        rightBtnHtml = `<div class="prob-text" style="color:var(--purple); font-weight:900; font-size:12px;">MAX LEVEL</div>`;
+      }
+
+      itemEl.innerHTML = `
+        <div class="item-row">
+          <div class="item-icon">${info.icon}</div>
+          <div class="item-info">
+            <div class="item-name">${info.name} <span class="level-badge">+${level}</span></div>
+            <div class="item-desc">${info.desc}</div>
+          </div>
+          ${rightBtnHtml}
+        </div>
+      `;
+
+      container.appendChild(itemEl);
+
+      const btn = itemEl.querySelector(`#upg-${key}`);
+      if (btn) {
+        btn.addEventListener('click', () => attemptUpgrade(key, btn));
+      }
+    });
+  }
+}
+
+async function attemptUpgrade(deptKey, btnEl) {
+  const currentLevel = G.depts[deptKey];
+  const cost = UPGRADE_COSTS[currentLevel];
+  if (G.cash < cost || G.isUpgrading) return;
+
+  G.cash -= cost;
+  G.isUpgrading = true;
+  updateUI();
+
+  // 수정 2. 강화 버튼 선딜레이 연출 개편 (흔들리고 흐려지다가 번쩍이는 하드코어 연출 적용)
+  const itemEl = btnEl.closest('.shop-item');
+  itemEl.classList.add('item-upgrading');
+  btnEl.textContent = "진행중..";
+  
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
+  const prob = UPGRADE_PROBS[currentLevel];
+  const isSuccess = Math.random() < prob;
+
+  if (isSuccess) {
+    G.depts[deptKey]++;
+    const newLv = G.depts[deptKey];
+    flash('rgba(0,230,118,0.25)');
+    showToast(`✨ 강화 성공!`, `[${DEPT_INFO[deptKey].name}] +${newLv}강 달성!`, 'profit');
+  } else {
+    G.depts[deptKey] = 0;
+    
+    document.body.classList.remove('hard-shake');
+    void document.body.offsetWidth;
+    document.body.classList.add('hard-shake');
+    setTimeout(() => document.body.classList.remove('hard-shake'), 600);
+    
+    flash('rgba(255,23,68,0.4)');
+    showToast(`💥 강화 실패!`, `${DEPT_INFO[deptKey].name}이(가) 0강으로 파괴되었습니다...`, 'loss');
+  }
+
+  G.isUpgrading = false;
+  // 리렌더링을 통해 item-upgrading 클래스 등은 자연스럽게 초기화됨
+  renderShopItems();
+  updateUI();
+}
+
+/* LOOP & 마진콜(강제청산) 로직 */
+let lastTick = Date.now();
+function loop() {
+  const now = Date.now();
+  if (now - lastTick >= 1000) { 
+    G.price = nextPrice(G.price); 
+    G.history.push(G.price); 
+    if (G.history.length > G.maxHist) G.history.shift(); 
+    lastTick = now; 
+    
+    // ⚡ 강제 청산 상품 마진콜 체크
+    if (G.shares > 0) {
+      const levData = getLeveragedData();
+      
+      // 배수가 증폭된 수익률이 -100% 이하가 되거나, 실시간 가치가 0원 이하가 되는 순간 청산
+      if (levData.pct <= -100 || levData.currentEval <= 0) {
+        G.cash = 0;
+        G.shares = 0;
+        G.avgPrice = 0;
+        
+        document.getElementById('btn-buy').disabled = false;
+        document.getElementById('btn-sell').disabled = true;
+        
+        flash('rgba(255,23,68,0.7)');
+        showToast('💥 강제 청산(Margin Call)!', `수익률 -100% 도달로 자산이 강제 소멸되었습니다.`, 'loss', 5000); // 청산 토스트도 5초 지속
+        
+        document.body.classList.remove('hard-shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('hard-shake');
+        setTimeout(() => document.body.classList.remove('hard-shake'), 600);
+      }
+    }
+    
+    updateUI(); 
+  }
+  drawChart(); requestAnimationFrame(loop);
+}
+
+updateUI(); scheduleNews(); loop();
+</script>
+</body>
+</html>
