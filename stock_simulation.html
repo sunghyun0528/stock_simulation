@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>주식 단타 시뮬레이터 v4.1 (연출 및 UI 개선 완벽 적용판)</title>
+<title>주식 단타 시뮬레이터 v4.2 (3단계 티어제 뉴스 시스템)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Noto+Sans+KR:wght(300;400;600;700;900)&display=swap');
 
@@ -63,7 +63,7 @@ body::after {
 #price-el    { color: var(--text); }
 #returns-el  { color: var(--text); }
 #assets-el   { color: var(--accent); text-shadow: 0 0 16px rgba(79,195,247,0.4); }
-#principal-el { color: var(--text); opacity: 0.9; } /* 추가된 원금 텍스트 */
+#principal-el { color: var(--text); opacity: 0.9; }
 #leverage-el { color: var(--yellow); }
 
 .h-stat-value.up   { color: var(--green) !important; text-shadow: 0 0 14px rgba(0,230,118,0.5) !important; }
@@ -125,12 +125,17 @@ body::after {
 #news-body { position: relative; z-index: 3; padding:16px 22px; border-radius:6px; width: 100%; }
 #news-banner.bull #news-body { background: rgba(0,20,10,0.95); border:1px solid rgba(0,230,118,0.5); box-shadow: 0 8px 48px rgba(0,230,118,0.25), 0 0 0 1px rgba(0,230,118,0.1); }
 #news-banner.bear #news-body { background: rgba(20,5,8,0.95); border:1px solid rgba(255,23,68,0.5); box-shadow: 0 8px 48px rgba(255,23,68,0.25), 0 0 0 1px rgba(255,23,68,0.1); }
+#news-banner.bull.massive #news-body { background: rgba(0,30,15,0.97); border:2px solid rgba(0,230,118,0.9); box-shadow: 0 8px 64px rgba(0,230,118,0.5), 0 0 0 1px rgba(0,230,118,0.3); }
+#news-banner.bear.massive #news-body { background: rgba(30,5,8,0.97); border:2px solid rgba(255,23,68,0.9); box-shadow: 0 8px 64px rgba(255,23,68,0.5), 0 0 0 1px rgba(255,23,68,0.3); }
 
 #news-tag { font-family: var(--mono); font-size:10px; letter-spacing:3px; text-transform:uppercase; margin-bottom:6px; }
 .bull #news-tag { color: var(--green); } .bear #news-tag { color: var(--red); }
+.massive #news-tag { font-size:12px; letter-spacing:4px; font-weight:900; }
 #news-headline { font-size:15px; font-weight:700; line-height:1.4; color: var(--text); }
+.massive #news-headline { font-size:17px; }
 #news-effect { font-family: var(--mono); font-size:11px; margin-top:6px; opacity:.7; }
 .bull #news-effect { color: var(--green); } .bear #news-effect { color: var(--red); }
+.massive #news-effect { opacity:1; font-size:13px; font-weight:900; }
 
 /* TOAST */
 #toast {
@@ -158,13 +163,12 @@ body::after {
 #shop-overlay { position:fixed; inset:0; z-index:400; background: rgba(0,0,0,0.7); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .3s; }
 #shop-overlay.open { opacity:1; pointer-events:all; }
 
-/* 수정 1. 샵 모달 위치 화면 중앙 정렬 및 반응형 사이즈 조정 */
 #shop-modal {
-  position: absolute; top: 50%; left: 50%; width: 380px; max-width: 92vw; max-height: 80vh; 
+  position: absolute; top: 50%; left: 50%; width: 380px; max-width: 92vw; max-height: 80vh;
   background: var(--card); border: 1px solid var(--border2); border-radius: 12px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(79,195,247,0.06); 
-  transform: translate(-50%, -50%) scale(0.92); 
-  transition: transform .35s cubic-bezier(.34,1.4,.64,1), opacity .3s; opacity: 0; 
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(79,195,247,0.06);
+  transform: translate(-50%, -50%) scale(0.92);
+  transition: transform .35s cubic-bezier(.34,1.4,.64,1), opacity .3s; opacity: 0;
   display: flex; flex-direction: column; overflow: hidden;
 }
 #shop-overlay.open #shop-modal { transform: translate(-50%, -50%) scale(1); opacity: 1; }
@@ -185,7 +189,7 @@ body::after {
 
 #shop-cash { padding:10px 18px; background:rgba(79,195,247,0.05); border-bottom:1px solid var(--border); font-family:var(--mono); font-size:11px; color:var(--dim); display:flex;gap:6px;align-items:center; flex-shrink: 0; }
 #shop-cash-val { color:var(--accent); font-size:14px; }
-#shop-items { padding:12px; display:flex; flex-direction:column; gap:8px; flex: 1; overflow-y:auto; } /* 스크롤 개선 */
+#shop-items { padding:12px; display:flex; flex-direction:column; gap:8px; flex: 1; overflow-y:auto; }
 #shop-items::-webkit-scrollbar { width:4px; }
 #shop-items::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
@@ -240,7 +244,7 @@ body::after {
   to { box-shadow: 0 0 25px rgba(234, 128, 252, 0.8), inset 0 0 15px rgba(234, 128, 252, 0.4); border-color: #f50057; }
 }
 
-/* 수정 2. 강화 이펙트: 떨림, 흐려짐, 펑(Flash) 연출 애니메이션 */
+/* 강화 이펙트 */
 @keyframes upgradeTension {
   0% { transform: translate(0, 0); filter: blur(0px) brightness(1); }
   10% { transform: translate(-2px, 1px); filter: blur(0.5px) brightness(0.9); }
@@ -252,11 +256,11 @@ body::after {
   70% { transform: translate(-3px, 2px); filter: blur(3.5px) brightness(0.6); }
   80% { transform: translate(3px, -2px); filter: blur(4px) brightness(1.4); }
   90% { transform: translate(-1px, 1px); filter: blur(2px) brightness(2.5); }
-  100% { transform: translate(0, 0); filter: blur(0px) brightness(4); } /* 마지막 순간 확 밝아짐 */
+  100% { transform: translate(0, 0); filter: blur(0px) brightness(4); }
 }
 .item-upgrading {
   animation: upgradeTension 1.5s cubic-bezier(.36,.07,.19,.97) forwards;
-  pointer-events: none; /* 클릭 방지 */
+  pointer-events: none;
 }
 
 /* ── SHAKE EFFECTS ── */
@@ -267,7 +271,6 @@ body::after {
 }
 #chart-wrap.shake { animation: bearShake 0.42s ease-out; }
 
-/* 하드코어 실패/청산 쉐이크 (전체 화면) */
 @keyframes hardFailureShake {
   0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
   10% { transform: translate(-15px, -15px) scale(1.02); filter: hue-rotate(-20deg) contrast(1.5); }
@@ -292,7 +295,7 @@ body.hard-shake { animation: hardFailureShake 0.6s cubic-bezier(.36,.07,.19,.97)
   <div class="h-stat"><div class="h-stat-label">현재가</div><div class="h-stat-value" id="price-el">10,000</div></div>
   <div class="h-stat"><div class="h-stat-label">실시간 수익률</div><div class="h-stat-value" id="returns-el">—</div></div>
   <div class="h-stat"><div class="h-stat-label">총 자산</div><div class="h-stat-value" id="assets-el">100,000</div></div>
-  
+
   <div class="h-stat" id="principal-stat" style="display: none;">
     <div class="h-stat-label">투자 원금</div>
     <div class="h-stat-value" id="principal-el">—</div>
@@ -354,12 +357,13 @@ const G = {
   price:     10000,
   history:   [],
   maxHist:   120,
-  leverage:      1, // ⚡ 상품의 레버리지 배수 (2배, 3배 등)
+  leverage:      1,
   bullBonus:     0,
   newsActive:    false,
   newsIsBull:    false,
   newsTicksLeft: 0,
   newsMaxTicks:  0,
+  newsMultiplier: 1.0,
   baseBullProb:  0.52,
   buyLockoutActive: false,
   sellLockoutActive: false,
@@ -380,19 +384,52 @@ const LEV_TIERS = [
   { lev:5, price:400000,  label:'×5 레버리지 상품 권한' },
 ];
 
-const BULL_NEWS = [
-  { headline:'정부, 대규모 반도체 투자 지원 패키지 발표 — 코스피 일제히 급등',       effect:'▲ 강세 효과 발동 중' },
-  { headline:'미 연준, 예상 밖 금리 인하 결정 — 글로벌 증시 환호',                  effect:'▲ 강세 효과 발동 중' },
-  { headline:'워런 버핏, 한국 시장에 수십조 매수 포지션 진입 포착',                  effect:'▲ 강세 효과 발동 중' },
-  { headline:'AI 슈퍼사이클 본격화 — 기술주 밸류에이션 재평가 시작',                 effect:'▲ 강세 효과 발동 중' },
+const MASSIVE_BULL_NEWS = [
+  { headline: '사우디 국부펀드, 한국 K-미래산업에 500조 원 전격 투자 확정 — 증시 폭등 랠리', effect: '▲▲ 초강력 급등 랠리 진행 중', multiplier: 1.5 },
+  { headline: '미 연준 긴급 FOMC 개최, 예상 밖 빅컷(0.5%p) 단행 — 글로벌 증시 환호성', effect: '▲▲ 초강력 급등 랠리 진행 중', multiplier: 1.5 },
+  { headline: '국내 연구진, 암세포 100% 사멸 신물질 세계 최초 개발 — FDA 패스트트랙 승인', effect: '▲▲ 초강력 급등 랠리 진행 중', multiplier: 1.5 }
+];
+const NORMAL_BULL_NEWS = [
+  { headline: '3분기 영업이익 전년비 450% 폭증 어닝 서프라이즈… 기관 풀매수 포착', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '글로벌 빅테크 기업과 5조 규모 독점 공급 계약 체결 공시 — 장중 상한가 터치', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '애플, 한국 핵심 부품사 전격 인수 타진설 솔솔… 관련 테마주 매수세 폭발', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '정부, K-배터리 및 반도체 100조 원 금융 지원 패키지 전격 발표', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '가상화폐 비트코인 사상 최고가 돌파 신기록! 관련주 동반 급등세', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '대주주, 3천억 규모 자사주 매입 및 전량 소각 깜짝 발표... 주주가치 제고', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: '꿈의 기술 전고체 배터리 상용화 앞당긴다… 핵심 특허 취득 소식에 들썩', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 },
+  { headline: 'K-뷰티 미국 아마존 싹쓸이 현상… 화장품 섹터 역대급 호황기 진입', effect: '▲ 강세 효과 발동 중', multiplier: 1.0 }
+];
+const WEAK_BULL_NEWS = [
+  { headline: '모건스탠리, "한국 증시 저평가 구간" 투자의견 비중확대로 상향', effect: '▲ 단기 반등세 감지', multiplier: 0.7 },
+  { headline: '장 막판 정체불명의 외국인 대량 순매수 유입… 바닥 다지기 들어가나', effect: '▲ 단기 반등세 감지', multiplier: 0.7 },
+  { headline: '자회사 나스닥 상장 예비심사 통과 임박 찌라시 확산', effect: '▲ 단기 반등세 감지', multiplier: 0.7 },
+  { headline: '낙폭 과대 인식 확산… 개미들 저가 매수세 유입되며 소폭 반등 성공', effect: '▲ 단기 반등세 감지', multiplier: 0.7 }
 ];
 
-const BEAR_NEWS = [
-  { headline:'美 CPI 예상치 대폭 상회 — 금리 인상 공포 재부상',                    effect:'▼ 약세 효과 발동 중' },
-  { headline:'중국발 금융위기 경고 — 리먼 사태 재현 우려',                         effect:'▼ 약세 효과 발동 중' },
-  { headline:'대주주 지분 전량 매각 공시 — 내부자 이탈 신호',                      effect:'▼ 약세 효과 발동 중' },
-  { headline:'회계 부정 혐의 포착 — 감사의견 거절 임박',                           effect:'▼ 약세 효과 발동 중' },
+const MASSIVE_BEAR_NEWS = [
+  { headline: '중국 최대 부동산 그룹 최종 부도 처리… 제2의 리먼 사태 공포에 증시 패닉셀', effect: '▼▼ 시장 붕괴급 패닉셀 발생', multiplier: 1.5 },
+  { headline: '시총 5조 기업, 1조 원대 초대형 분식회계 발각… 검찰 압수수색 및 거래정지 임박', effect: '▼▼ 시장 붕괴급 패닉셀 발생', multiplier: 1.5 },
+  { headline: '중동 전면전 발발 우려 최고조… 국제 유가 폭등하며 나스닥 선물 붕괴', effect: '▼▼ 시장 붕괴급 패닉셀 발생', multiplier: 1.5 }
 ];
+const NORMAL_BEAR_NEWS = [
+  { headline: '어닝 쇼크! 3분기 영업이익 적자 전환… 실망한 외인 물량 폭탄 쏟아져', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '자금난 이기지 못하고 5천억 규모 주주배정 유상증자 기습 공시... 시간외 하한가', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '재무담당 핵심 임원 500억 횡령 후 해외 도주… 신뢰도 바닥 치며 투매 폭발', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '금융당국, 불법 공매도 및 테마주 시세조종 전면 압수수색 착수', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '미국, 한국산 주요 수출품에 25% 보복 관세 부과 예고… 수출주 초비상', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '대주주 및 임원진, 고점 논란 속 지분 전량 블록딜(시간외 대량매매) 엑시트', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '글로벌 임상 3상 최종 실패 공식 발표… 바이오 섹터 연쇄 하한가 공포', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 },
+  { headline: '美 CPI 예상치 대폭 상회… 연준 매파적 발언에 금리 인상 공포 재점화', effect: '▼ 약세 투심 악화 중', multiplier: 1.0 }
+];
+const WEAK_BEAR_NEWS = [
+  { headline: '주요 증권사, "단기 과열 징후 농후" 리포트 발간하며 목표주가 일제히 하향', effect: '▼ 단기 조정 국면 진입', multiplier: 0.7 },
+  { headline: '연일 급등에 따른 피로감… 기관 차익실현 매물 출회되며 소폭 조정을 받는 모습', effect: '▼ 단기 조정 국면 진입', multiplier: 0.7 },
+  { headline: '핵심 신제품 출시 일정 다음 분기로 기약 없이 연기… 실망 매물 등장', effect: '▼ 단기 조정 국면 진입', multiplier: 0.7 },
+  { headline: '뚜렷한 호재 부재 속 거래량 뚝 끊기며 지루한 계단식 하락세', effect: '▼ 단기 조정 국면 진입', multiplier: 0.7 }
+];
+
+const BULL_NEWS = [...MASSIVE_BULL_NEWS, ...NORMAL_BULL_NEWS, ...WEAK_BULL_NEWS];
+const BEAR_NEWS = [...MASSIVE_BEAR_NEWS, ...NORMAL_BEAR_NEWS, ...WEAK_BEAR_NEWS];
 
 const UPGRADE_COSTS = [30000, 100000, 300000, 1000000, 3000000];
 const UPGRADE_PROBS = [1.0, 0.8, 0.6, 0.4, 0.2];
@@ -418,7 +455,7 @@ function nextPrice(p) {
   if (G.newsActive && G.newsTicksLeft > 0) {
     let force = 0;
     if (G.newsIsBull) {
-      const maxBonus = G.depts.rnd * 0.005; 
+      const maxBonus = G.depts.rnd * 0.005;
       force = G.buyLockoutActive
         ? (0.03 + Math.random() * (0.03 + maxBonus))
         : (0.0068 + Math.random() * (0.0102 + maxBonus));
@@ -428,11 +465,12 @@ function nextPrice(p) {
         ? -(0.10 + Math.random() * 0.10) * riskMitigation
         : -(0.008 + Math.random() * 0.012) * riskMitigation;
     }
+    force = force * G.newsMultiplier;
     G.newsTicksLeft--;
     if (G.newsTicksLeft === 0) G.newsActive = false;
     return Math.round(Math.max(100, Math.min(p * (1 + force), 9999999)));
   }
-  
+
   const insiderBias = G.depts.insider * 0.003;
   const drift = (Math.random() - (0.49 - insiderBias)) * 0.022;
   const shock = Math.random() < 0.06 ? (Math.random() - 0.5) * 0.055 : 0;
@@ -491,32 +529,23 @@ const fmt = n => Math.round(n).toLocaleString('ko-KR');
 /* ⚡ 핵심 수식 처리 파트 */
 function getLeveragedData() {
   if (G.shares <= 0 || G.avgPrice <= 0) return { pct: 0, currentEval: 0 };
-  
-  // 1. 순수 주가의 기초 변동률 계산
+
   const rawPct = ((G.price - G.avgPrice) / G.avgPrice * 100);
-  
-  // 2. 레버리지 배수를 적용하여 실시간 최종 상품 수익률 증폭
   const pct = rawPct * G.leverage;
-  
-  // 3. 내 순수 투자 원금 계산
   const principal = G.shares * G.avgPrice;
-  
-  // 4. 배수가 적용된 수익률을 기준으로 실시간 평가금 도출
   const currentEval = principal * (1 + (pct / 100));
-  
+
   return { pct, currentEval };
 }
 
 function updateUI() {
   document.getElementById('price-el').textContent = fmt(G.price) + '원';
-  
+
   const levData = getLeveragedData();
-  
-  // ⭐ 총 자산 업데이트
+
   const totalAssets = G.cash + (G.shares > 0 ? Math.max(0, levData.currentEval) : 0);
   document.getElementById('assets-el').textContent = fmt(totalAssets) + '원';
-  
-  // 수정 3. 투자 원금 헤더 업데이트 로직
+
   const principalStat = document.getElementById('principal-stat');
   if (G.shares > 0) {
     principalStat.style.display = 'flex';
@@ -528,13 +557,12 @@ function updateUI() {
 
   const returnsEl = document.getElementById('returns-el');
   if (G.shares > 0) {
-    // ⭐ 화면에 레버리지 배수가 곱해진 최종 수익률을 즉시 표기
     returnsEl.textContent = (levData.pct >= 0 ? '+' : '') + levData.pct.toFixed(2) + '%';
     returnsEl.className = 'h-stat-value ' + (levData.pct >= 0 ? 'up' : 'dn');
   } else {
     returnsEl.textContent = '—'; returnsEl.className = 'h-stat-value';
   }
-  
+
   document.getElementById('leverage-el').textContent = '×' + G.leverage;
   const strip = document.getElementById('hold-strip');
   if (G.shares > 0) {
@@ -553,47 +581,42 @@ function updateUI() {
   if (G.buyLockoutActive) { buyBtn.disabled = true; buyBtn.classList.add('lock-disabled'); }
   else if (G.cash <= 0) { buyBtn.disabled = true; buyBtn.classList.remove('lock-disabled'); }
   else { buyBtn.disabled = false; buyBtn.classList.remove('lock-disabled'); }
-  
+
   if (!G.isUpgrading) renderShopItems();
 }
 
 /* ACTIONS */
 document.getElementById('btn-buy').addEventListener('click', () => {
   if (G.cash <= 0 || G.buyLockoutActive) return;
-  
-  // ⚡ 원금 그대로 정직하게 수량을 구매함 (빚 없음)
-  G.shares = G.cash / G.price; 
-  G.avgPrice = G.price; 
+
+  G.shares = G.cash / G.price;
+  G.avgPrice = G.price;
   G.cash = 0;
-  
+
   document.getElementById('btn-buy').disabled = true; document.getElementById('btn-sell').disabled = false;
-  flash('rgba(0,230,118,0.15)'); 
-  showToast('▲ 매수 체결', `@ ${fmt(G.avgPrice)}원 (LEV ×${G.leverage} 상품)`, 'profit'); 
+  flash('rgba(0,230,118,0.15)');
+  showToast('▲ 매수 체결', `@ ${fmt(G.avgPrice)}원 (LEV ×${G.leverage} 상품)`, 'profit');
   updateUI();
 });
 
 document.getElementById('btn-sell').addEventListener('click', () => {
   if (G.shares <= 0 || G.sellLockoutActive) return;
-  
+
   const levData = getLeveragedData();
-  const principal = G.shares * G.avgPrice; // 내 원금
-  const pnl = levData.currentEval - principal; // 최종 정산된 순수익/순손실
-  
-  // ⚡ 배수가 깔끔하게 입혀진 최종 평가금 전액을 현금으로 정산받음
-  G.cash = Math.max(0, levData.currentEval); 
-  G.shares = 0; 
-  G.avgPrice = 0; 
-  
+  const principal = G.shares * G.avgPrice;
+  const pnl = levData.currentEval - principal;
+
+  G.cash = Math.max(0, levData.currentEval);
+  G.shares = 0;
+  G.avgPrice = 0;
+
   document.getElementById('btn-buy').disabled = false; document.getElementById('btn-sell').disabled = true;
   flash(pnl >= 0 ? 'rgba(0,230,118,0.15)' : 'rgba(255,23,68,0.12)');
-  
-  // 수정 4. 매도 알림(토스트)의 지속시간을 5000ms(5초)로 2배 연장
-  showToast(pnl >= 0 ? '▲ 실현 이익' : '▼ 실현 손실', `${fmt(pnl)}원`, pnl >= 0 ? 'profit' : 'loss', 5000); 
+  showToast(pnl >= 0 ? '▲ 실현 이익' : '▼ 실현 손실', `${fmt(pnl)}원`, pnl >= 0 ? 'profit' : 'loss', 5000);
   updateUI();
 });
 
 let toastTmr = null;
-// 수정 4를 위해 파라미터(duration) 추가
 function showToast(main, sub, type, duration = 2500) {
   const el = document.getElementById('toast');
   document.getElementById('toast-main').textContent = main; document.getElementById('toast-sub').textContent = sub;
@@ -608,23 +631,24 @@ function flash(clr) {
 
 /* NEWS SYS */
 let newsTimer = null;
-function scheduleNews() { 
+function scheduleNews() {
   const timeReduction = Math.pow(0.90, G.depts.marketing);
   const baseTime = 18000;
   const randTime = 15000;
-  newsTimer = setTimeout(triggerNews, (baseTime + Math.random() * randTime) * timeReduction); 
+  newsTimer = setTimeout(triggerNews, (baseTime + Math.random() * randTime) * timeReduction);
 }
 
 let newsHideTimer = null;
 function triggerNews() {
-  const banner = document.getElementById('news-banner'); 
+  const banner = document.getElementById('news-banner');
   const marketingBullBonus = G.depts.marketing * 0.04;
   const finalBullProb = Math.min(1.0, G.baseBullProb + G.bullBonus + marketingBullBonus);
-  
+
   const isBull = Math.random() < finalBullProb;
   const pool = isBull ? BULL_NEWS : BEAR_NEWS;
   const item = pool[Math.floor(Math.random() * pool.length)];
   G.newsActive = true; G.newsIsBull = isBull; G.newsTicksLeft = 7 + Math.floor(Math.random() * 3); G.newsMaxTicks = G.newsTicksLeft;
+  G.newsMultiplier = item.multiplier;
 
   if (!isBull) {
     G.sellLockoutActive = true;
@@ -640,10 +664,17 @@ function triggerNews() {
   }
 
   if (isBull) { G.buyLockoutActive = true; setTimeout(() => { G.buyLockoutActive = false; updateUI(); }, 4500); }
-  document.getElementById('news-tag').textContent = isBull ? '📈 호재 뉴스' : '📉 악재 뉴스';
+
+  const isMassive = item.multiplier >= 1.5;
+  document.getElementById('news-tag').textContent = isBull
+    ? (isMassive ? '🚨 초대형 호재 뉴스' : '📈 호재 뉴스')
+    : (isMassive ? '🚨 초대형 악재 뉴스' : '📉 악재 뉴스');
   document.getElementById('news-headline').textContent = item.headline;
-  document.getElementById('news-effect').textContent = isBull ? '▲ 강세 효과 발동 중...' : item.effect;
-  banner.className = 'show ' + (isBull ? 'bull' : 'bear');
+  document.getElementById('news-effect').textContent = item.effect;
+
+  let bannerClass = 'show ' + (isBull ? 'bull' : 'bear');
+  if (isMassive) bannerClass += ' massive';
+  banner.className = bannerClass;
   updateUI();
 
   if(newsHideTimer) clearTimeout(newsHideTimer);
@@ -668,7 +699,7 @@ document.querySelectorAll('.shop-tab').forEach(btn => {
 
 function renderShopItems() {
   const container = document.getElementById('shop-items'); container.innerHTML = '';
-  
+
   if (shopState.tab === 'general') {
     const nextTier = LEV_TIERS[shopState.levIndex];
     const levItem  = document.createElement('div'); levItem.className = 'shop-item';
@@ -691,7 +722,7 @@ function renderShopItems() {
       const level = G.depts[key];
       const itemEl = document.createElement('div');
       itemEl.className = `shop-item tier-${level}`;
-      
+
       let rightBtnHtml = '';
       if (level < 5) {
         const cost = UPGRADE_COSTS[level];
@@ -734,11 +765,10 @@ async function attemptUpgrade(deptKey, btnEl) {
   G.isUpgrading = true;
   updateUI();
 
-  // 수정 2. 강화 버튼 선딜레이 연출 개편 (흔들리고 흐려지다가 번쩍이는 하드코어 연출 적용)
   const itemEl = btnEl.closest('.shop-item');
   itemEl.classList.add('item-upgrading');
   btnEl.textContent = "진행중..";
-  
+
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const prob = UPGRADE_PROBS[currentLevel];
@@ -751,18 +781,17 @@ async function attemptUpgrade(deptKey, btnEl) {
     showToast(`✨ 강화 성공!`, `[${DEPT_INFO[deptKey].name}] +${newLv}강 달성!`, 'profit');
   } else {
     G.depts[deptKey] = 0;
-    
+
     document.body.classList.remove('hard-shake');
     void document.body.offsetWidth;
     document.body.classList.add('hard-shake');
     setTimeout(() => document.body.classList.remove('hard-shake'), 600);
-    
+
     flash('rgba(255,23,68,0.4)');
     showToast(`💥 강화 실패!`, `${DEPT_INFO[deptKey].name}이(가) 0강으로 파괴되었습니다...`, 'loss');
   }
 
   G.isUpgrading = false;
-  // 리렌더링을 통해 item-upgrading 클래스 등은 자연스럽게 초기화됨
   renderShopItems();
   updateUI();
 }
@@ -771,36 +800,34 @@ async function attemptUpgrade(deptKey, btnEl) {
 let lastTick = Date.now();
 function loop() {
   const now = Date.now();
-  if (now - lastTick >= 1000) { 
-    G.price = nextPrice(G.price); 
-    G.history.push(G.price); 
-    if (G.history.length > G.maxHist) G.history.shift(); 
-    lastTick = now; 
-    
-    // ⚡ 강제 청산 상품 마진콜 체크
+  if (now - lastTick >= 1000) {
+    G.price = nextPrice(G.price);
+    G.history.push(G.price);
+    if (G.history.length > G.maxHist) G.history.shift();
+    lastTick = now;
+
     if (G.shares > 0) {
       const levData = getLeveragedData();
-      
-      // 배수가 증폭된 수익률이 -100% 이하가 되거나, 실시간 가치가 0원 이하가 되는 순간 청산
+
       if (levData.pct <= -100 || levData.currentEval <= 0) {
         G.cash = 0;
         G.shares = 0;
         G.avgPrice = 0;
-        
+
         document.getElementById('btn-buy').disabled = false;
         document.getElementById('btn-sell').disabled = true;
-        
+
         flash('rgba(255,23,68,0.7)');
-        showToast('💥 강제 청산(Margin Call)!', `수익률 -100% 도달로 자산이 강제 소멸되었습니다.`, 'loss', 5000); // 청산 토스트도 5초 지속
-        
+        showToast('💥 강제 청산(Margin Call)!', `수익률 -100% 도달로 자산이 강제 소멸되었습니다.`, 'loss', 5000);
+
         document.body.classList.remove('hard-shake');
         void document.body.offsetWidth;
         document.body.classList.add('hard-shake');
         setTimeout(() => document.body.classList.remove('hard-shake'), 600);
       }
     }
-    
-    updateUI(); 
+
+    updateUI();
   }
   drawChart(); requestAnimationFrame(loop);
 }
