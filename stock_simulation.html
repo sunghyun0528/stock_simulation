@@ -398,7 +398,7 @@ const UPGRADE_COSTS = [30000, 100000, 300000, 1000000, 3000000];
 const UPGRADE_PROBS = [1.0, 0.8, 0.6, 0.4, 0.2];
 
 const DEPT_INFO = {
-  marketing: { icon: '📢', name: '글로벌 마케팅팀', desc: '뉴스 대기시간 10%씩 감소 & 호재 확률 레벨당 +4% 증가' },
+  marketing: { icon: '📢', name: '글로벌 마케팅팀', desc: '호재 발생빈도 증가' },
   rnd:       { icon: '🧪', name: '미래기술 R&D',    desc: '호재 발생 시 주가 펌핑 상한선 증가' },
   risk:      { icon: '⚖️', name: '리스크 관리실',   desc: '악재 발생 시 폭락 피해 경감' },
   insider:   { icon: '💰', name: '내부자 운용팀',   desc: '평상시 주가 우상향 확률 증가' }
@@ -434,7 +434,7 @@ function nextPrice(p) {
   }
   
   const insiderBias = G.depts.insider * 0.003;
-  const drift = (Math.random() - (0.48 - insiderBias)) * 0.022;
+  const drift = (Math.random() - (0.49 - insiderBias)) * 0.022;
   const shock = Math.random() < 0.06 ? (Math.random() - 0.5) * 0.055 : 0;
   return Math.round(Math.max(100, Math.min(p * (1 + drift + shock), 9999999)));
 }
