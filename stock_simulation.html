@@ -483,45 +483,115 @@ G.price = G.history[G.history.length - 1];
 
 /* RENDER */
 function drawChart() {
-  const W = canvas.width, H = canvas.height; ctx.clearRect(0, 0, W, H);
-  const data = G.history; if (data.length < 2) return;
+  const W = canvas.width, H = canvas.height; 
+  ctx.clearRect(0, 0, W, H);
+  const data = G.history; 
+  if (data.length < 2) return;
 
-  const min = Math.min(...data) * 0.96; const max = Math.max(...data) * 1.04;
-  const rng = max - min || 1; const pad = {t:36, b:28, l:8, r:64};
+  // 1. 기존 가격 히스토리 배열을 바탕으로 실시간 OHLC 캔들 데이터 생성
+  const candles = [];
+  for (let i = 0; i < data.length; i++) {
+    const open = i === 0 ? data[0] : data[i-1];
+    const close = data[i];
+    let diff = Math.abs(close - open);
+    if (diff === 0) diff = close * 0.0004; // 변동이 없을 때 최소한의 형태 유지를 위한 보정
+
+    // 실시간 재생 시 위아래 꼬리가 무작위로 떨리는 현상을 방지하기 위해 고정 시드 난수 사용
+    const seed1 = Math.abs(Math.sin(i * 12.9898 + close * 78.233)) * 43758.5453;
+    const rand1 = seed1 - Math.floor(seed1);
+    const seed2 = Math.abs(Math.cos(i * 45.164 + open * 27.451)) * 43758.5453;
+    const rand2 = seed2 - Math.floor(seed2);
+
+    // 고가(High) 및 저가(Low) 계산
+    const high = Math.max(open, close) + diff * (0.15 + rand1 * 0.4);
+    let low = Math.min(open, close) - diff * (0.15 + rand2 * 0.4);
+    if (low < 0) low = 0;
+
+    candles.push({ open, high, low, close });
+  }
+
+  // 2. 캔들 전체의 고가/저가를 기준으로 상하단 Y축 스케일링 설정
+  const mins = candles.map(c => c.low);
+  const maxs = candles.map(c => c.high);
+  const min = Math.min(...mins) * 0.97;
+  const max = Math.max(...maxs) * 1.03;
+  const rng = max - min || 1;
+  
+  const pad = {t:36, b:28, l:8, r:64};
   const cW  = W - pad.l - pad.r, cH  = H - pad.t - pad.b;
+  
   const toX = i => pad.l + (i / (G.maxHist - 1)) * cW;
   const toY = v => pad.t + cH - ((v - min) / rng) * cH;
-  const off = G.maxHist - data.length;
+  const off = G.maxHist - candles.length;
 
-  ctx.fillStyle = '#2a3a5a'; ctx.font = '9px Share Tech Mono,monospace'; ctx.textAlign = 'left';
+  // 3. 배경 그리드 및 가격 레이블 그리기 (기존 디자인 유지)
+  ctx.fillStyle = '#2a3a5a'; 
+  ctx.font = '9px Share Tech Mono,monospace'; 
+  ctx.textAlign = 'left';
   for (let g = 0; g <= 4; g++) {
     const y = pad.t + (g / 4) * cH;
-    ctx.strokeStyle = 'rgba(26,32,53,0.9)'; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r + 4, y); ctx.stroke();
+    ctx.strokeStyle = 'rgba(26,32,53,0.9)'; 
+    ctx.beginPath(); 
+    ctx.moveTo(pad.l, y); 
+    ctx.lineTo(W - pad.r + 4, y); 
+    ctx.stroke();
     ctx.fillText(Math.round(max - (g / 4) * rng).toLocaleString(), W - pad.r + 8, y + 3);
   }
 
+  // 4. 보유 주식 평단가 점선 표시 (기존 디자인 유지)
   if (G.shares > 0 && G.avgPrice > 0) {
     const ay = toY(G.avgPrice);
-    ctx.strokeStyle = 'rgba(255,215,64,0.55)'; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(pad.l, ay); ctx.lineTo(W - pad.r, ay); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#ffd740'; ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
+    ctx.strokeStyle = 'rgba(255,215,64,0.55)'; 
+    ctx.setLineDash([5,4]); 
+    ctx.beginPath(); 
+    ctx.moveTo(pad.l, ay); 
+    ctx.lineTo(W - pad.r, ay); 
+    ctx.stroke(); 
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ffd740'; 
+    ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
   }
 
-  const isUp = data[data.length - 1] >= data[0];
-  const lineClr = isUp ? '#00e676' : '#ff1744';
-  const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
-  grad.addColorStop(0, isUp ? 'rgba(0,230,118,0.2)' : 'rgba(255,23,68,0.18)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.01)');
+  // 5. 캔들차트(봉차트) 본격 순회 렌더링
+  for (let i = 0; i < candles.length; i++) {
+    const c = candles[i];
+    const x = toX(off + i);
+    const yOpen = toY(c.open);
+    const yClose = toY(c.close);
+    const yHigh = toY(c.high);
+    const yLow = toY(c.low);
 
-  ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
-  for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
-  ctx.lineTo(toX(off + data.length - 1), H - pad.b); ctx.lineTo(toX(off), H - pad.b); ctx.fillStyle = grad; ctx.fill();
+    // 가격 조건에 맞춰 상승(양봉)=초록색, 하락(음봉)=빨간색 테마 적용
+    const isBull = c.close >= c.open;
+    const color = isBull ? '#00e676' : '#ff1744';
 
-  ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
-  for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
-  ctx.strokeStyle = lineClr; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 1.5;
 
-  const dx = toX(off + data.length - 1), dy = toY(data[data.length-1]);
-  ctx.beginPath(); ctx.arc(dx, dy, 5, 0, Math.PI*2); ctx.fillStyle = lineClr; ctx.fill();
+    // A. 위아래 꼬리(Wick) 렌더링
+    ctx.beginPath();
+    ctx.moveTo(x, yHigh);
+    ctx.lineTo(x, yLow);
+    ctx.stroke();
+
+    // B. 몸통(Body) 너비 및 위치 설정 (캔들 간 간격 자동 조절)
+    const bodyHeight = Math.abs(yClose - yOpen);
+    const bodyWidth = Math.max(2, (cW / G.maxHist) * 0.65); 
+    const bodyX = x - bodyWidth / 2;
+    const bodyY = Math.min(yOpen, yClose);
+
+    if (bodyHeight < 1.5) {
+      // 가격 변동이 미미해 도지(Doji) 형태가 될 경우 가로선으로 표현
+      ctx.beginPath();
+      ctx.moveTo(bodyX, bodyY);
+      ctx.lineTo(bodyX + bodyWidth, bodyY);
+      ctx.stroke();
+    } else {
+      // 일반적인 직사각형 몸통 채우기
+      ctx.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
+    }
+  }
 }
 
 const fmt = n => Math.round(n).toLocaleString('ko-KR');
