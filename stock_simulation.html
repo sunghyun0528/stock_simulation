@@ -69,8 +69,33 @@ body::after {
 .h-stat-value.up   { color: var(--green) !important; text-shadow: 0 0 14px rgba(0,230,118,0.5) !important; }
 .h-stat-value.dn   { color: var(--red)   !important; text-shadow: 0 0 14px rgba(255,23,68,0.4) !important; }
 
+/* 차트 변경 토글 UI 추가 */
+#chart-toggle {
+  margin-left: auto;
+  margin-right: 14px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#chart-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#chart-toggle.active-line {
+  color: var(--text);
+  border-color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
 #live-wrap {
-  margin-left:auto; display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; gap:6px;
   font-family: var(--mono); font-size:10px; letter-spacing:2px; color: var(--dim);
 }
 #live-dot {
@@ -217,53 +242,296 @@ body::after {
 
 /* Tier 0 (0강) */
 .tier-0 { border-color: #222840; }
-/* Tier 1-2 (1~2강: Bronze) */
-.tier-1, .tier-2 { border-color: #cd7f32; box-shadow: 0 0 8px rgba(205, 127, 50, 0.2); }
-.tier-1 .level-badge, .tier-2 .level-badge { background: #cd7f32; color: #fff; }
+/* Tier 1 (1강: Deep Brown/Bronze) */
+.tier-1 { border-color: #a0522d; box-shadow: 0 0 8px rgba(160, 82, 45, 0.3); }
+.tier-1 .level-badge { background: #8B5A2B; color: #fff; }
+/* Tier 2 (2강: Silver Metallic) */
+.tier-2 { border-color: #b4b4b4; box-shadow: 0 0 10px rgba(180, 180, 180, 0.25); }
+.tier-2 .level-badge { background: linear-gradient(135deg, #e0e0e0, #b4b4b4); color: #222; text-shadow: none; }
 /* Tier 3 (3강: Gold) */
 .tier-3 { border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.3); }
 .tier-3 .level-badge { background: #ffd700; color: #000; text-shadow: none; }
-/* Tier 4 (4강: Shine Gold) */
-.tier-4 { border: 1.5px solid #ffdf00; box-shadow: 0 0 20px rgba(255, 223, 0, 0.4); overflow: hidden; }
-.tier-4 .level-badge { background: #ffdf00; color: #000; }
+/* Tier 4 (4강: Golden Aura) */
+@keyframes goldBorder {
+  0%   { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.45), inset 0 0 4px rgba(255,215,0,0.08); }
+  20%  { border-color: #ffe55c; box-shadow: 0 0 22px rgba(255,229,92,0.75),  inset 0 0 10px rgba(255,229,92,0.15); }
+  40%  { border-color: #ffb300; box-shadow: 0 0 28px rgba(255,179,0,0.8),   inset 0 0 14px rgba(255,179,0,0.18); }
+  60%  { border-color: #ffd700; box-shadow: 0 0 36px rgba(255,215,0,0.9),   inset 0 0 18px rgba(255,215,0,0.2); }
+  80%  { border-color: #ffe082; box-shadow: 0 0 20px rgba(255,224,130,0.65), inset 0 0 8px rgba(255,224,130,0.12); }
+  100% { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.45),  inset 0 0 4px rgba(255,215,0,0.08); }
+}
+@keyframes goldBg {
+  0%,100% { background: rgba(255,215,0,0.03); }
+  50%      { background: rgba(255,193,7,0.07); }
+}
+@keyframes goldShine {
+  0%   { transform: translateX(-140%) rotate(28deg); opacity: 0; }
+  18%  { opacity: 0.55; }
+  82%  { opacity: 0.55; }
+  100% { transform: translateX(140%) rotate(28deg); opacity: 0; }
+}
+@keyframes goldBadge {
+  0%,100% { background: #ffd700; color: #000; box-shadow: 0 0 6px rgba(255,215,0,0.5); }
+  50%      { background: #ffe55c; color: #000; box-shadow: 0 0 14px rgba(255,229,92,0.9); }
+}
+.tier-4 {
+  border: 1.5px solid #ffd700;
+  animation: goldBorder 5.0s ease-in-out infinite, goldBg 5.0s ease-in-out infinite;
+  overflow: hidden;
+  position: relative;
+}
+.tier-4 .level-badge { animation: goldBadge 5.0s ease-in-out infinite; }
 .tier-4::after {
   content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-  transform: rotate(30deg); animation: shine 2.5s infinite; pointer-events: none;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,240,100,0.28) 45%, rgba(255,255,255,0.18) 50%, rgba(255,240,100,0.28) 55%, rgba(255,255,255,0) 100%);
+  animation: goldShine 5.0s ease-in-out infinite; pointer-events: none;
 }
-@keyframes shine { 0% { transform: translateX(-100%) rotate(30deg); } 100% { transform: translateX(100%) rotate(30deg); } }
-/* Tier 5 (5강: Cyber Purple Neon) */
+
+/* Tier 5 (5강: Cyber Fantasy MAX Aura) */
+@keyframes tier5Border {
+  0%   { border-color: #ff00de; box-shadow: 0 0 14px rgba(255,0,222,0.55), 0 0 32px rgba(255,0,222,0.2), inset 0 0 10px rgba(255,0,222,0.08); }
+  33%  { border-color: #bf00ff; box-shadow: 0 0 20px rgba(191,0,255,0.7),  0 0 48px rgba(191,0,255,0.25), inset 0 0 16px rgba(191,0,255,0.12); }
+  66%  { border-color: #7b2fff; box-shadow: 0 0 18px rgba(123,47,255,0.65), 0 0 40px rgba(123,47,255,0.22), inset 0 0 14px rgba(123,47,255,0.1); }
+  100% { border-color: #ff00de; box-shadow: 0 0 14px rgba(255,0,222,0.55), 0 0 32px rgba(255,0,222,0.2), inset 0 0 10px rgba(255,0,222,0.08); }
+}
+@keyframes tier5Bg {
+  0%   { background: rgba(255,0,222,0.04); }
+  50%  { background: rgba(123,47,255,0.09); }
+  100% { background: rgba(255,0,222,0.04); }
+}
+@keyframes tier5Plasma {
+  0%   { transform: translateX(-100%) skewX(-15deg); opacity:0; }
+  15%  { opacity: 0.6; }
+  85%  { opacity: 0.6; }
+  100% { transform: translateX(100%) skewX(-15deg); opacity:0; }
+}
+@keyframes tier5PlasmaB {
+  0%   { transform: translateX(100%) skewX(15deg); opacity:0; }
+  15%  { opacity: 0.4; }
+  85%  { opacity: 0.4; }
+  100% { transform: translateX(-100%) skewX(15deg); opacity:0; }
+}
+@keyframes tier5Ember1 {
+  0%   { transform: translate(0px,    0px) scale(0);   opacity: 0; }
+  8%   { transform: translate(-2px,  -4px) scale(1);   opacity: 0.9; }
+  85%  { transform: translate(-16px,-30px) scale(0.4); opacity: 0.3; }
+  100% { transform: translate(-20px,-38px) scale(0);   opacity: 0; }
+}
+@keyframes tier5Ember2 {
+  0%   { transform: translate(0px,   0px) scale(0);   opacity: 0; }
+  8%   { transform: translate(2px,  -3px) scale(1);   opacity: 0.85; }
+  85%  { transform: translate(14px,-28px) scale(0.4); opacity: 0.25; }
+  100% { transform: translate(18px,-36px) scale(0);   opacity: 0; }
+}
+@keyframes tier5Ember3 {
+  0%   { transform: translate(0px,   0px) scale(0);   opacity: 0; }
+  8%   { transform: translate(-1px, -4px) scale(1);   opacity: 1; }
+  85%  { transform: translate(-9px,-26px) scale(0.5); opacity: 0.35; }
+  100% { transform: translate(-12px,-34px) scale(0);  opacity: 0; }
+}
+@keyframes tier5Ember4 {
+  0%   { transform: translate(0px,   0px) scale(0);   opacity: 0; }
+  8%   { transform: translate(3px,  -3px) scale(1);   opacity: 0.8; }
+  85%  { transform: translate(20px,-22px) scale(0.4); opacity: 0.2; }
+  100% { transform: translate(24px,-30px) scale(0);   opacity: 0; }
+}
+
+/* Tier5 ember spark particles */
+.tier-5 .t5-ember {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; z-index: 10;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0%, #ff00de 50%, transparent 100%);
+}
+/* Tier5 ember spark particles */
+.tier-5 .t5-ember {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; z-index: 10;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0%, #ff00de 50%, transparent 100%);
+}
+.tier-5 .t5-ember:nth-child(1) { bottom: 6px; left: 18%;  animation: tier5Ember1 4.0s ease-in-out infinite 0.0s; }
+.tier-5 .t5-ember:nth-child(2) { bottom: 6px; left: 58%;  animation: tier5Ember2 4.8s ease-in-out infinite 0.9s; background: radial-gradient(circle, #fff 0%, #bf00ff 50%, transparent 100%); }
+.tier-5 .t5-ember:nth-child(3) { bottom: 6px; left: 38%;  animation: tier5Ember3 3.6s ease-in-out infinite 1.8s; }
+.tier-5 .t5-ember:nth-child(4) { bottom: 6px; left: 78%;  animation: tier5Ember4 4.4s ease-in-out infinite 0.5s; background: radial-gradient(circle, #fff 0%, #7b2fff 50%, transparent 100%); }
+.tier-5 .t5-ember:nth-child(5) { bottom: 6px; left:  8%;  animation: tier5Ember2 5.0s ease-in-out infinite 2.4s; background: radial-gradient(circle, #fff 0%, #ff00de 50%, transparent 100%); }
+.tier-5 .t5-ember:nth-child(6) { bottom: 6px; left: 68%;  animation: tier5Ember1 4.2s ease-in-out infinite 1.3s; background: radial-gradient(circle, #fff 0%, #bf00ff 50%, transparent 100%); }
+
+@keyframes tier5BadgePulse {
+  0%,100% { background: linear-gradient(135deg,#ff00de,#bf00ff); box-shadow: 0 0 10px rgba(255,0,222,0.7); color:#fff; }
+  50%      { background: linear-gradient(135deg,#7b2fff,#ff00de); box-shadow: 0 0 18px rgba(123,47,255,0.9); color:#fff; }
+}
+@keyframes tier5NameGlow {
+  0%,100% { text-shadow: 0 0 6px rgba(255,0,222,0.8), 0 0 14px rgba(255,0,222,0.4); color: #ff88f0; }
+  50%      { text-shadow: 0 0 10px rgba(123,47,255,1),  0 0 24px rgba(191,0,255,0.5); color: #c988ff; }
+}
+
 .tier-5 {
-  border: 1.5px solid var(--purple); background: rgba(234, 128, 252, 0.05);
-  animation: neonPulse 1.5s infinite alternate;
+  border: 1.5px solid #ff00de;
+  animation: tier5Border 4.5s ease-in-out infinite, tier5Bg 4.5s ease-in-out infinite;
+  overflow: hidden;
+  position: relative;
 }
-.tier-5 .level-badge { background: var(--purple); color: #000; box-shadow: 0 0 10px var(--purple); }
+.tier-5::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden; border-radius: inherit; pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255,0,222,0.18) 40%, rgba(123,47,255,0.18) 60%, transparent 100%);
+  animation: tier5Plasma 4.0s ease-in-out infinite;
+}
+.tier-5::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden; border-radius: inherit; pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(191,0,255,0.12) 40%, rgba(255,0,222,0.15) 60%, transparent 100%);
+  animation: tier5PlasmaB 5.2s ease-in-out infinite;
+}
+.tier-5 .level-badge {
+  animation: tier5BadgePulse 4.5s ease-in-out infinite;
+  color: #fff;
+}
+.tier-5 .item-name {
+  animation: tier5NameGlow 4.5s ease-in-out infinite;
+}
 .tier-5 .item-buy-btn { opacity: 0; pointer-events: none; }
-@keyframes neonPulse {
-  from { box-shadow: 0 0 10px rgba(234, 128, 252, 0.4), inset 0 0 5px rgba(234, 128, 252, 0.2); }
-  to { box-shadow: 0 0 25px rgba(234, 128, 252, 0.8), inset 0 0 15px rgba(234, 128, 252, 0.4); border-color: #f50057; }
-}
 
 /* 강화 이펙트 */
 @keyframes upgradeTension {
-  0% { transform: translate(0, 0); filter: blur(0px) brightness(1); }
-  10% { transform: translate(-2px, 1px); filter: blur(0.5px) brightness(0.9); }
-  20% { transform: translate(2px, -1px); filter: blur(1px) brightness(1.1); }
-  30% { transform: translate(-3px, 2px); filter: blur(1.5px) brightness(0.8); }
-  40% { transform: translate(3px, -2px); filter: blur(2px) brightness(1.2); }
-  50% { transform: translate(-4px, 3px); filter: blur(2.5px) brightness(0.7); }
-  60% { transform: translate(4px, -3px); filter: blur(3px) brightness(1.3); }
-  70% { transform: translate(-3px, 2px); filter: blur(3.5px) brightness(0.6); }
-  80% { transform: translate(3px, -2px); filter: blur(4px) brightness(1.4); }
-  90% { transform: translate(-1px, 1px); filter: blur(2px) brightness(2.5); }
-  100% { transform: translate(0, 0); filter: blur(0px) brightness(4); }
-}
-.item-upgrading {
-  animation: upgradeTension 1.5s cubic-bezier(.36,.07,.19,.97) forwards;
-  pointer-events: none;
+  0%   { transform: translate(0, 0);          filter: brightness(1); }
+  20%  { transform: translate(-0.5px, 0.5px); filter: brightness(0.95); }
+  40%  { transform: translate(0.5px, -0.5px); filter: brightness(1.05); }
+  60%  { transform: translate(-0.5px, 0);     filter: brightness(0.95); }
+  80%  { transform: translate(0.5px, 0.5px);  filter: brightness(1.05); }
+  100% { transform: translate(0, 0);          filter: brightness(4); }
 }
 
-/* ── SHAKE EFFECTS ── */
+@keyframes upgradeNeonScan {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes upgradeChromaShift {
+  0%   { text-shadow: -2px 0 #ff00de, 2px 0 #00ffff; opacity: 1; }
+  25%  { text-shadow: 2px 0 #ff0055, -2px 0 #00ff99; opacity: 0.85; }
+  50%  { text-shadow: -3px 0 #ffee00, 3px 0 #7700ff; opacity: 1; }
+  75%  { text-shadow: 3px 0 #00ffff, -3px 0 #ff00de; opacity: 0.9; }
+  100% { text-shadow: -2px 0 #ff00de, 2px 0 #00ffff; opacity: 1; }
+}
+
+@keyframes upgradeBorderPulse {
+  0%   { box-shadow: 0 0 8px rgba(79,195,247,0.3), inset 0 0 8px rgba(79,195,247,0.1); }
+  33%  { box-shadow: 0 0 24px rgba(255,0,222,0.6), inset 0 0 16px rgba(255,0,222,0.2); border-color: #ff00de; }
+  66%  { box-shadow: 0 0 24px rgba(0,255,255,0.6), inset 0 0 16px rgba(0,255,255,0.2); border-color: #00ffff; }
+  100% { box-shadow: 0 0 8px rgba(79,195,247,0.3), inset 0 0 8px rgba(79,195,247,0.1); }
+}
+
+.item-upgrading {
+  animation: upgradeTension 1.5s cubic-bezier(.36,.07,.19,.97) forwards,
+             upgradeBorderPulse 0.35s linear infinite;
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+.item-upgrading::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(79,195,247,0.18) 40%, rgba(255,0,222,0.18) 60%, transparent 100%);
+  background-size: 200% 100%;
+  animation: upgradeNeonScan 0.5s linear infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+.item-upgrading .item-name {
+  animation: upgradeChromaShift 0.3s linear infinite;
+}
+
+/* ── OPERATOR EVENT & FAKE NEWS STYLES ── */
+#operator-warning {
+  position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 50; pointer-events: none; text-align: center; opacity: 0;
+  transition: opacity 0.2s;
+  width: 90%;
+}
+#operator-warning.show { opacity: 1; }
+
+@keyframes glitchText {
+  0%   { text-shadow: -3px 0 #ff0, 3px 0 #f00; skewX(0deg); }
+  10%  { text-shadow: 3px 0 #0ff, -3px 0 #ff0; }
+  20%  { text-shadow: -3px 0 #f0f, 3px 0 #0ff; clip-path: inset(5% 0 5% 0); }
+  30%  { text-shadow: 3px 0 #ff0, -3px 0 #f0f; clip-path: inset(0); }
+  40%  { text-shadow: -4px 0 #0ff, 4px 0 #ff0; }
+  50%  { text-shadow: 4px 0 #f00, -4px 0 #0ff; clip-path: inset(10% 0 10% 0); }
+  60%  { text-shadow: -2px 0 #ff0, 2px 0 #f0f; clip-path: inset(0); }
+  70%  { text-shadow: 2px 0 #0ff, -2px 0 #f00; }
+  80%  { text-shadow: -3px 0 #f0f, 3px 0 #ff0; clip-path: inset(2% 0 2% 0); }
+  90%  { text-shadow: 3px 0 #f00, -3px 0 #0ff; clip-path: inset(0); }
+  100% { text-shadow: -3px 0 #ff0, 3px 0 #f00; }
+}
+
+@keyframes warnBlink {
+  0%,100% { opacity:1; } 50% { opacity:0.4; }
+}
+
+#operator-warning .warn-text {
+  font-family: var(--display); font-size: clamp(18px, 3vw, 28px); letter-spacing: 3px;
+  color: #ffd700;
+  animation: glitchText 0.4s infinite, warnBlink 0.6s infinite;
+  display: block;
+}
+#operator-warning .warn-sub {
+  font-family: var(--mono); font-size: 12px; color: #ff4444; letter-spacing: 4px;
+  margin-top: 6px; display: block;
+  animation: warnBlink 0.4s infinite;
+}
+
+@keyframes feverGlow {
+  0%,100% { background: rgba(255,215,0,0); }
+  50%      { background: rgba(255,215,0,0.15); }
+}
+#chart-wrap.fever { animation: feverGlow 0.4s ease-in-out infinite; }
+
+@keyframes bloodFlash {
+  0%   { background: rgba(255,0,0,0.0); }
+  15%  { background: rgba(255,0,0,0.7); }
+  35%  { background: rgba(180,0,0,0.5); }
+  55%  { background: rgba(255,0,0,0.65); }
+  70%  { background: rgba(140,0,0,0.3); }
+  100% { background: rgba(255,0,0,0.0); }
+}
+#flash.blood { animation: bloodFlash 0.5s ease-out forwards !important; }
+
+@keyframes chartPanic {
+  0%  { transform: translate(0,0) rotate(0deg); }
+  10% { transform: translate(-10px,-8px) rotate(-1.5deg); }
+  20% { transform: translate(12px,10px) rotate(1.5deg); }
+  30% { transform: translate(-14px,6px) rotate(-1deg); }
+  40% { transform: translate(14px,-10px) rotate(1deg); }
+  50% { transform: translate(-8px,12px) rotate(-1.5deg); }
+  60% { transform: translate(10px,-8px) rotate(1deg); }
+  70% { transform: translate(-12px,4px) rotate(-0.5deg); }
+  80% { transform: translate(8px,-6px) rotate(0.5deg); }
+  90% { transform: translate(-4px,4px) rotate(0deg); }
+  100%{ transform: translate(0,0) rotate(0deg); }
+}
+#chart-wrap.panic { animation: chartPanic 0.55s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* 작전세력 등장확률 배지 */
+#operator-prob {
+  position: absolute; top: 10px; left: 90px; z-index: 20;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+  color: #ff4444; background: rgba(255,20,20,0.08);
+  border: 1px solid rgba(255,20,20,0.25); padding: 3px 8px; border-radius: 3px;
+  display: none;
+}
+
+/* 거짓뉴스 배너 특수 스타일 */
+#news-banner.fake #news-body {
+  background: rgba(30,0,0,0.97) !important;
+  border: 2px solid rgba(255,23,68,0.95) !important;
+  box-shadow: 0 8px 64px rgba(255,23,68,0.7), 0 0 0 2px rgba(255,0,0,0.5) !important;
+}
+#news-banner.fake #news-tag { color: #ff1744 !important; animation: warnBlink 0.5s infinite; }
 @keyframes bearShake {
   0% { transform: translate(0, 0) rotate(0deg); } 20% { transform: translate(-6px, -4px) rotate(-1deg); }
   40% { transform: translate(8px, -4px) rotate(1deg); } 60% { transform: translate(-5px, 6px) rotate(-1deg); }
@@ -273,15 +541,15 @@ body::after {
 
 @keyframes hardFailureShake {
   0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
-  10% { transform: translate(-15px, -15px) scale(1.02); filter: hue-rotate(-20deg) contrast(1.5); }
-  20% { transform: translate(15px, 15px) scale(0.98); }
-  30% { transform: translate(-20px, 10px) scale(1.03); }
-  40% { transform: translate(20px, -15px) scale(0.97); }
-  50% { transform: translate(-10px, 20px) scale(1.02); }
-  60% { transform: translate(10px, -20px) scale(0.98); }
-  70% { transform: translate(-15px, 5px) scale(1.01); }
-  80% { transform: translate(15px, -5px) scale(0.99); }
-  90% { transform: translate(-5px, 10px) scale(1); }
+  10% { transform: translate(-3px, -3px) scale(1.004); filter: hue-rotate(-20deg) contrast(1.5); }
+  20% { transform: translate(3px, 3px) scale(0.996); }
+  30% { transform: translate(-4px, 2px) scale(1.006); }
+  40% { transform: translate(4px, -3px) scale(0.994); }
+  50% { transform: translate(-2px, 4px) scale(1.004); }
+  60% { transform: translate(2px, -4px) scale(0.996); }
+  70% { transform: translate(-3px, 1px) scale(1.002); }
+  80% { transform: translate(3px, -1px) scale(0.998); }
+  90% { transform: translate(-1px, 2px) scale(1); }
   100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg) contrast(1); }
 }
 body.hard-shake { animation: hardFailureShake 0.6s cubic-bezier(.36,.07,.19,.97) both; background: #1a0505; }
@@ -302,12 +570,19 @@ body.hard-shake { animation: hardFailureShake 0.6s cubic-bezier(.36,.07,.19,.97)
   </div>
 
   <div class="h-stat"><div class="h-stat-label">배율</div><div class="h-stat-value" id="leverage-el">×1</div></div>
+  
+  <button id="chart-toggle">봉차트</button>
   <div id="live-wrap"><div id="live-dot"></div>LIVE</div>
 </div>
 
 <div id="chart-wrap">
   <canvas id="chart"></canvas>
   <div id="lev-badge">LEV ×1</div>
+  <div id="operator-prob"></div>
+  <div id="operator-warning">
+    <span class="warn-text">⚠️ 작전세력 개입 포착! (HIGH RISK)</span>
+    <span class="warn-sub">■ FEVER TIME ACTIVATED ■</span>
+  </div>
 </div>
 
 <div id="bottom">
@@ -368,6 +643,11 @@ const G = {
   buyLockoutActive: false,
   sellLockoutActive: false,
   isUpgrading: false,
+  chartType: 'candle', // 봉차트 vs 그래프차트 상태 (기본값: candle)
+
+  // ── 작전세력 이벤트 상태 ──
+  operatorActive: false,
+  operatorTicksLeft: 0,
 
   depts: {
     marketing: 0,
@@ -435,9 +715,9 @@ const UPGRADE_COSTS = [30000, 100000, 300000, 1000000, 3000000];
 const UPGRADE_PROBS = [1.0, 0.8, 0.6, 0.4, 0.2];
 
 const DEPT_INFO = {
-  marketing: { icon: '📢', name: '글로벌 마케팅팀', desc: '호재 발생빈도 증가' },
+  marketing: { icon: '📢', name: '글로벌 마케팅팀', desc: '호재 발생빈도 +8%↑ / 호재 확률 레벨당 +2.5%' },
   rnd:       { icon: '🧪', name: '미래기술 R&D',    desc: '호재 발생 시 주가 펌핑 상한선 증가' },
-  risk:      { icon: '⚖️', name: '리스크 관리실',   desc: '악재 발생 시 폭락 피해 경감' },
+  risk:      { icon: '⚖️', name: '리스크 관리실',   desc: '악재 발생 시 폭락 피해 경감 (레벨당 6%)' },
   insider:   { icon: '💰', name: '내부자 운용팀',   desc: '평상시 주가 우상향 확률 증가' }
 };
 
@@ -450,8 +730,75 @@ function resizeCanvas() {
 }
 resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
+/* ── 개발자모드 (DEVELOPER MODE) — 3초 안에 10번 클릭 ── */
+let devClickTimes = [];
+let devModeActive = false;
+
+function activateDeveloperMode() {
+  if (devModeActive) return;
+  devModeActive = true;
+
+  // 개발자모드: 돈 무제한
+  G.cash = 999999999999;
+  // 개발자모드: 부서 강화 확률 모두 100%
+  for (let i = 0; i < UPGRADE_PROBS.length; i++) UPGRADE_PROBS[i] = 1.0;
+
+  // 개발자모드 시각 표시
+  const toggle = document.getElementById('chart-toggle');
+  toggle.textContent = '🔧 DEV MODE';
+  toggle.style.color = '#ff00de';
+  toggle.style.borderColor = '#ff00de';
+  toggle.style.boxShadow = '0 0 12px rgba(255,0,222,0.6)';
+
+  showToast('🔧 개발자모드 ON', '돈 무제한 · 강화확률 100%', 'profit', 4000);
+  flash('rgba(255,0,222,0.3)');
+  updateUI();
+  if (shopOpen) renderShopItems();
+}
+
+/* 차트 토글 이벤트 리스너 추가 */
+document.getElementById('chart-toggle').addEventListener('click', (e) => {
+  // 개발자모드 활성화 감지 (3초 안에 10번)
+  const now = Date.now();
+  devClickTimes.push(now);
+  devClickTimes = devClickTimes.filter(t => now - t <= 3000);
+  if (!devModeActive && devClickTimes.length >= 10) {
+    activateDeveloperMode();
+    devClickTimes = [];
+    return;
+  }
+
+  if (devModeActive) return; // 개발자모드 활성화 시 차트 토글 비활성
+
+  if (G.chartType === 'candle') {
+    G.chartType = 'line';
+    e.target.textContent = '그래프차트';
+    e.target.classList.add('active-line');
+  } else {
+    G.chartType = 'candle';
+    e.target.textContent = '봉차트';
+    e.target.classList.remove('active-line');
+  }
+  drawChart(); // 즉시 차트 갱신
+});
+
 /* ENGINE */
 function nextPrice(p) {
+  // 작전세력 발동 중: 변동폭 300% + 돌발 급등락
+  if (G.operatorActive) {
+    const insiderBias = G.depts.insider * 0.003;
+    // 평상시 drift * 3배 + shock * 3배
+    const drift = (Math.random() - (0.49 - insiderBias)) * 0.066;
+    const shock = Math.random() < 0.12 ? (Math.random() - 0.5) * 0.165 : 0;
+    // 매 초 5% 확률 초급등/초급락 (10~20%)
+    let spike = 0;
+    if (Math.random() < 0.05) {
+      const mag = 0.10 + Math.random() * 0.10;
+      spike = Math.random() < 0.5 ? mag : -mag;
+    }
+    return Math.round(Math.max(100, Math.min(p * (1 + drift + shock + spike), 9999999)));
+  }
+
   if (G.newsActive && G.newsTicksLeft > 0) {
     let force = 0;
     if (G.newsIsBull) {
@@ -460,7 +807,7 @@ function nextPrice(p) {
         ? (0.03 + Math.random() * (0.03 + maxBonus))
         : (0.0068 + Math.random() * (0.0102 + maxBonus));
     } else {
-      const riskMitigation = 1 - (G.depts.risk * 0.12);
+      const riskMitigation = 1 - (G.depts.risk * 0.06);
       force = (G.newsTicksLeft === G.newsMaxTicks)
         ? -(0.10 + Math.random() * 0.10) * riskMitigation
         : -(0.008 + Math.random() * 0.012) * riskMitigation;
@@ -488,109 +835,153 @@ function drawChart() {
   const data = G.history; 
   if (data.length < 2) return;
 
-  // 1. 기존 가격 히스토리 배열을 바탕으로 실시간 OHLC 캔들 데이터 생성
-  const candles = [];
-  for (let i = 0; i < data.length; i++) {
-    const open = i === 0 ? data[0] : data[i-1];
-    const close = data[i];
-    let diff = Math.abs(close - open);
-    if (diff === 0) diff = close * 0.0004; // 변동이 없을 때 최소한의 형태 유지를 위한 보정
+  if (G.chartType === 'candle') {
+    // ── 기존 봉차트 렌더링 로직 ──
+    const candles = [];
+    for (let i = 0; i < data.length; i++) {
+      const open = i === 0 ? data[0] : data[i-1];
+      const close = data[i];
+      let diff = Math.abs(close - open);
+      if (diff === 0) diff = close * 0.0004;
 
-    // 실시간 재생 시 위아래 꼬리가 무작위로 떨리는 현상을 방지하기 위해 고정 시드 난수 사용
-    const seed1 = Math.abs(Math.sin(i * 12.9898 + close * 78.233)) * 43758.5453;
-    const rand1 = seed1 - Math.floor(seed1);
-    const seed2 = Math.abs(Math.cos(i * 45.164 + open * 27.451)) * 43758.5453;
-    const rand2 = seed2 - Math.floor(seed2);
+      const seed1 = Math.abs(Math.sin(i * 12.9898 + close * 78.233)) * 43758.5453;
+      const rand1 = seed1 - Math.floor(seed1);
+      const seed2 = Math.abs(Math.cos(i * 45.164 + open * 27.451)) * 43758.5453;
+      const rand2 = seed2 - Math.floor(seed2);
 
-    // 고가(High) 및 저가(Low) 계산
-    const high = Math.max(open, close) + diff * (0.15 + rand1 * 0.4);
-    let low = Math.min(open, close) - diff * (0.15 + rand2 * 0.4);
-    if (low < 0) low = 0;
+      const high = Math.max(open, close) + diff * (0.15 + rand1 * 0.4);
+      let low = Math.min(open, close) - diff * (0.15 + rand2 * 0.4);
+      if (low < 0) low = 0;
 
-    candles.push({ open, high, low, close });
-  }
-
-  // 2. 캔들 전체의 고가/저가를 기준으로 상하단 Y축 스케일링 설정
-  const mins = candles.map(c => c.low);
-  const maxs = candles.map(c => c.high);
-  const min = Math.min(...mins) * 0.97;
-  const max = Math.max(...maxs) * 1.03;
-  const rng = max - min || 1;
-  
-  const pad = {t:36, b:28, l:8, r:64};
-  const cW  = W - pad.l - pad.r, cH  = H - pad.t - pad.b;
-  
-  const toX = i => pad.l + (i / (G.maxHist - 1)) * cW;
-  const toY = v => pad.t + cH - ((v - min) / rng) * cH;
-  const off = G.maxHist - candles.length;
-
-  // 3. 배경 그리드 및 가격 레이블 그리기 (기존 디자인 유지)
-  ctx.fillStyle = '#2a3a5a'; 
-  ctx.font = '9px Share Tech Mono,monospace'; 
-  ctx.textAlign = 'left';
-  for (let g = 0; g <= 4; g++) {
-    const y = pad.t + (g / 4) * cH;
-    ctx.strokeStyle = 'rgba(26,32,53,0.9)'; 
-    ctx.beginPath(); 
-    ctx.moveTo(pad.l, y); 
-    ctx.lineTo(W - pad.r + 4, y); 
-    ctx.stroke();
-    ctx.fillText(Math.round(max - (g / 4) * rng).toLocaleString(), W - pad.r + 8, y + 3);
-  }
-
-  // 4. 보유 주식 평단가 점선 표시 (기존 디자인 유지)
-  if (G.shares > 0 && G.avgPrice > 0) {
-    const ay = toY(G.avgPrice);
-    ctx.strokeStyle = 'rgba(255,215,64,0.55)'; 
-    ctx.setLineDash([5,4]); 
-    ctx.beginPath(); 
-    ctx.moveTo(pad.l, ay); 
-    ctx.lineTo(W - pad.r, ay); 
-    ctx.stroke(); 
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#ffd740'; 
-    ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
-  }
-
-  // 5. 캔들차트(봉차트) 본격 순회 렌더링
-  for (let i = 0; i < candles.length; i++) {
-    const c = candles[i];
-    const x = toX(off + i);
-    const yOpen = toY(c.open);
-    const yClose = toY(c.close);
-    const yHigh = toY(c.high);
-    const yLow = toY(c.low);
-
-    // 가격 조건에 맞춰 상승(양봉)=초록색, 하락(음봉)=빨간색 테마 적용
-    const isBull = c.close >= c.open;
-    const color = isBull ? '#00e676' : '#ff1744';
-
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = 1.5;
-
-    // A. 위아래 꼬리(Wick) 렌더링
-    ctx.beginPath();
-    ctx.moveTo(x, yHigh);
-    ctx.lineTo(x, yLow);
-    ctx.stroke();
-
-    // B. 몸통(Body) 너비 및 위치 설정 (캔들 간 간격 자동 조절)
-    const bodyHeight = Math.abs(yClose - yOpen);
-    const bodyWidth = Math.max(2, (cW / G.maxHist) * 0.65); 
-    const bodyX = x - bodyWidth / 2;
-    const bodyY = Math.min(yOpen, yClose);
-
-    if (bodyHeight < 1.5) {
-      // 가격 변동이 미미해 도지(Doji) 형태가 될 경우 가로선으로 표현
-      ctx.beginPath();
-      ctx.moveTo(bodyX, bodyY);
-      ctx.lineTo(bodyX + bodyWidth, bodyY);
-      ctx.stroke();
-    } else {
-      // 일반적인 직사각형 몸통 채우기
-      ctx.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
+      candles.push({ open, high, low, close });
     }
+
+    const mins = candles.map(c => c.low);
+    const maxs = candles.map(c => c.high);
+    const min = Math.min(...mins) * 0.97;
+    const max = Math.max(...maxs) * 1.03;
+    const rng = max - min || 1;
+    
+    const pad = {t:36, b:28, l:8, r:64};
+    const cW  = W - pad.l - pad.r, cH  = H - pad.t - pad.b;
+    
+    const toX = i => pad.l + (i / (G.maxHist - 1)) * cW;
+    const toY = v => pad.t + cH - ((v - min) / rng) * cH;
+    const off = G.maxHist - candles.length;
+
+    ctx.fillStyle = '#2a3a5a'; 
+    ctx.font = '9px Share Tech Mono,monospace'; 
+    ctx.textAlign = 'left';
+    for (let g = 0; g <= 4; g++) {
+      const y = pad.t + (g / 4) * cH;
+      ctx.strokeStyle = 'rgba(26,32,53,0.9)'; 
+      ctx.beginPath(); 
+      ctx.moveTo(pad.l, y); 
+      ctx.lineTo(W - pad.r + 4, y); 
+      ctx.stroke();
+      ctx.fillText(Math.round(max - (g / 4) * rng).toLocaleString(), W - pad.r + 8, y + 3);
+    }
+
+    if (G.shares > 0 && G.avgPrice > 0) {
+      const ay = toY(G.avgPrice);
+      ctx.strokeStyle = 'rgba(255,215,64,0.55)'; 
+      ctx.setLineDash([5,4]); 
+      ctx.beginPath(); 
+      ctx.moveTo(pad.l, ay); 
+      ctx.lineTo(W - pad.r, ay); 
+      ctx.stroke(); 
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffd740'; 
+      ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
+    }
+
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const x = toX(off + i);
+      const yOpen = toY(c.open);
+      const yClose = toY(c.close);
+      const yHigh = toY(c.high);
+      const yLow = toY(c.low);
+
+      const isBull = c.close >= c.open;
+      const color = isBull ? '#00e676' : '#ff1744';
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.moveTo(x, yHigh);
+      ctx.lineTo(x, yLow);
+      ctx.stroke();
+
+      const bodyHeight = Math.abs(yClose - yOpen);
+      const bodyWidth = Math.max(2, (cW / G.maxHist) * 0.65); 
+      const bodyX = x - bodyWidth / 2;
+      const bodyY = Math.min(yOpen, yClose);
+
+      if (bodyHeight < 1.5) {
+        ctx.beginPath();
+        ctx.moveTo(bodyX, bodyY);
+        ctx.lineTo(bodyX + bodyWidth, bodyY);
+        ctx.stroke();
+      } else {
+        ctx.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
+      }
+    }
+  } else {
+    // ── 제공받은 그래프차트(Line) 렌더링 로직 ──
+    const min = Math.min(...data) * 0.96; 
+    const max = Math.max(...data) * 1.04;
+    const rng = max - min || 1; 
+    const pad = {t:36, b:28, l:8, r:64};
+    const cW  = W - pad.l - pad.r, cH  = H - pad.t - pad.b;
+    const toX = i => pad.l + (i / (G.maxHist - 1)) * cW;
+    const toY = v => pad.t + cH - ((v - min) / rng) * cH;
+    const off = G.maxHist - data.length;
+
+    ctx.fillStyle = '#2a3a5a'; 
+    ctx.font = '9px Share Tech Mono,monospace'; 
+    ctx.textAlign = 'left';
+    for (let g = 0; g <= 4; g++) {
+      const y = pad.t + (g / 4) * cH;
+      ctx.strokeStyle = 'rgba(26,32,53,0.9)'; 
+      ctx.beginPath(); 
+      ctx.moveTo(pad.l, y); 
+      ctx.lineTo(W - pad.r + 4, y); 
+      ctx.stroke();
+      ctx.fillText(Math.round(max - (g / 4) * rng).toLocaleString(), W - pad.r + 8, y + 3);
+    }
+
+    if (G.shares > 0 && G.avgPrice > 0) {
+      const ay = toY(G.avgPrice);
+      ctx.strokeStyle = 'rgba(255,215,64,0.55)'; 
+      ctx.setLineDash([5,4]); 
+      ctx.beginPath(); 
+      ctx.moveTo(pad.l, ay); 
+      ctx.lineTo(W - pad.r, ay); 
+      ctx.stroke(); 
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffd740'; 
+      ctx.fillText('AVG ' + Math.round(G.avgPrice).toLocaleString(), pad.l + 4, ay - 4);
+    }
+
+    const isUp = data[data.length - 1] >= data[0];
+    const lineClr = isUp ? '#00e676' : '#ff1744';
+    const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+    grad.addColorStop(0, isUp ? 'rgba(0,230,118,0.2)' : 'rgba(255,23,68,0.18)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.01)');
+
+    ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
+    for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
+    ctx.lineTo(toX(off + data.length - 1), H - pad.b); ctx.lineTo(toX(off), H - pad.b); ctx.fillStyle = grad; ctx.fill();
+
+    ctx.beginPath(); ctx.moveTo(toX(off), toY(data[0]));
+    for (let i = 1; i < data.length; i++) ctx.bezierCurveTo((toX(off+i-1)+toX(off+i))/2, toY(data[i-1]), (toX(off+i-1)+toX(off+i))/2, toY(data[i]), toX(off+i), toY(data[i]));
+    ctx.strokeStyle = lineClr; ctx.lineWidth = 2; ctx.stroke();
+
+    const dx = toX(off + data.length - 1), dy = toY(data[data.length-1]);
+    ctx.beginPath(); ctx.arc(dx, dy, 5, 0, Math.PI*2); ctx.fillStyle = lineClr; ctx.fill();
   }
 }
 
@@ -643,16 +1034,58 @@ function updateUI() {
   } else strip.classList.remove('visible');
 
   document.getElementById('shop-cash-val').textContent = fmt(G.cash) + '원';
+
+  // ── 상점이 열려있을 때 버튼 활성/비활성만 업데이트 (DOM 재생성 없이) ──
+  if (shopOpen && !G.isUpgrading) {
+    updateShopButtonStates();
+  }
+
   const levBadge = document.getElementById('lev-badge');
   if (G.leverage > 1) { levBadge.textContent = 'LEV ×' + G.leverage; levBadge.classList.add('visible'); }
   else levBadge.classList.remove('visible');
+
+  // ── 작전세력 등장확률 배지 업데이트 ──
+  const opProb = document.getElementById('operator-prob');
+  // 총자산 기준 (매수 중엔 cash=0이므로 평가금 포함)
+  const levDataBadge = getLeveragedData();
+  const totalAssetsBadge = G.cash + (G.shares > 0 ? Math.max(0, levDataBadge.currentEval) : 0);
+  if (totalAssetsBadge >= 10000000000) { // 100억
+    opProb.textContent = '작전세력 등장확률: 5%';
+    opProb.style.display = 'block';
+  } else if (totalAssetsBadge >= 1000000000) { // 10억
+    opProb.textContent = '작전세력 등장확률: 2%';
+    opProb.style.display = 'block';
+  } else if (totalAssetsBadge >= 100000000) { // 1억
+    opProb.textContent = '작전세력 등장확률: 1%';
+    opProb.style.display = 'block';
+  } else {
+    opProb.style.display = 'none';
+  }
 
   const buyBtn = document.getElementById('btn-buy');
   if (G.buyLockoutActive) { buyBtn.disabled = true; buyBtn.classList.add('lock-disabled'); }
   else if (G.cash <= 0) { buyBtn.disabled = true; buyBtn.classList.remove('lock-disabled'); }
   else { buyBtn.disabled = false; buyBtn.classList.remove('lock-disabled'); }
+}
 
-  if (!G.isUpgrading) renderShopItems();
+// ── 상점 버튼 상태만 업데이트 (DOM 재생성 없이 — 4강/5강 애니메이션 유지) ──
+function updateShopButtonStates() {
+  if (shopState.tab === 'general') {
+    const levBtn = document.getElementById('buy-lev');
+    const nextTier = LEV_TIERS[shopState.levIndex];
+    if (levBtn && nextTier) levBtn.disabled = G.cash < nextTier.price;
+    const boostBtn = document.getElementById('buy-boost');
+    if (boostBtn) boostBtn.disabled = G.cash < 200000;
+  } else {
+    Object.keys(DEPT_INFO).forEach(key => {
+      const level = G.depts[key];
+      const btn = document.getElementById(`upg-${key}`);
+      if (btn && level < 5) {
+        const cost = UPGRADE_COSTS[level];
+        btn.disabled = G.cash < cost || G.isUpgrading;
+      }
+    });
+  }
 }
 
 /* ACTIONS */
@@ -702,7 +1135,7 @@ function flash(clr) {
 /* NEWS SYS */
 let newsTimer = null;
 function scheduleNews() {
-  const timeReduction = Math.pow(0.90, G.depts.marketing);
+  const timeReduction = Math.pow(0.92, G.depts.marketing);
   const baseTime = 18000;
   const randTime = 15000;
   newsTimer = setTimeout(triggerNews, (baseTime + Math.random() * randTime) * timeReduction);
@@ -711,7 +1144,7 @@ function scheduleNews() {
 let newsHideTimer = null;
 function triggerNews() {
   const banner = document.getElementById('news-banner');
-  const marketingBullBonus = G.depts.marketing * 0.04;
+  const marketingBullBonus = G.depts.marketing * 0.025;
   const finalBullProb = Math.min(1.0, G.baseBullProb + G.bullBonus + marketingBullBonus);
 
   const isBull = Math.random() < finalBullProb;
@@ -774,16 +1207,16 @@ function renderShopItems() {
     const nextTier = LEV_TIERS[shopState.levIndex];
     const levItem  = document.createElement('div'); levItem.className = 'shop-item';
     if (nextTier) {
-      levItem.innerHTML = `<div class="item-row"><div class="item-icon">⚡</div><div class="item-info"><div class="item-name">${nextTier.label}</div><div class="item-desc">현재 취급 상품: ×${G.leverage} 배율</div><div class="item-price">💰 ${fmt(nextTier.price)}원</div></div><button class="item-buy-btn yellow-btn" id="buy-lev" ${G.cash>=nextTier.price?'':'disabled'}>구매</button></div>`;
+      levItem.innerHTML = `<div class="item-row"><div class="item-icon">⚡</div><div class="item-info"><div class="item-name">${nextTier.label}</div><div class="item-desc">현재 취급 정품: ×${G.leverage} 배율</div><div class="item-price">💰 ${fmt(nextTier.price)}원</div></div><button class="item-buy-btn yellow-btn" id="buy-lev" ${G.cash>=nextTier.price?'':'disabled'}>구매</button></div>`;
       levItem.querySelector('#buy-lev').addEventListener('click', () => { G.cash -= nextTier.price; G.leverage = nextTier.lev; shopState.levIndex++; updateUI(); closeShopAction(); });
     } else levItem.innerHTML = `<div class="item-row"><div class="item-icon">⚡</div><div class="item-info"><div class="item-name">레버리지 MAX</div></div><button class="item-buy-btn yellow-btn" disabled>완료</button></div>`;
     container.appendChild(levItem);
 
     const boostItem = document.createElement('div'); boostItem.className = 'shop-item';
-    if (shopState.partnerBought) boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">파트너십 완료</div></div><button class="item-buy-btn green-btn" disabled>보유중</button></div>`;
+    if (shopState.partnerBought) boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">파트너십 완료</div></div><button class="item-buy-btn yellow-btn" disabled>보유중</button></div>`;
     else {
-      boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">기업 파트너십</div><div class="item-price">💰 80,000원</div></div><button class="item-buy-btn green-btn" id="buy-boost" ${G.cash>=80000?'':'disabled'}>구매</button></div>`;
-      boostItem.querySelector('#buy-boost').addEventListener('click', () => { G.cash -= 80000; G.bullBonus += 0.15; shopState.partnerBought = true; updateUI(); closeShopAction(); });
+      boostItem.innerHTML = `<div class="item-row"><div class="item-icon">🤝</div><div class="item-info"><div class="item-name">기업 파트너십</div><div class="item-desc">호재 발생 확률 +7% 증가</div><div class="item-price">💰 200,000원</div></div><button class="item-buy-btn yellow-btn" id="buy-boost" ${G.cash>=200000?'':'disabled'}>구매</button></div>`;
+      boostItem.querySelector('#buy-boost').addEventListener('click', () => { G.cash -= 200000; G.bullBonus += 0.07; shopState.partnerBought = true; updateUI(); closeShopAction(); });
     }
     container.appendChild(boostItem);
   } else {
@@ -817,6 +1250,15 @@ function renderShopItems() {
       `;
 
       container.appendChild(itemEl);
+
+      // tier-5: ember 파티클 주입
+      if (level === 5) {
+        for (let e = 0; e < 6; e++) {
+          const ember = document.createElement('div');
+          ember.className = 't5-ember';
+          itemEl.appendChild(ember);
+        }
+      }
 
       const btn = itemEl.querySelector(`#upg-${key}`);
       if (btn) {
@@ -866,17 +1308,105 @@ async function attemptUpgrade(deptKey, btnEl) {
   updateUI();
 }
 
+/* ── 작전세력 이벤트 ── */
+let operatorFastTicker = null;
+
+function triggerOperatorEvent() {
+  if (G.operatorActive || G.newsActive) return;
+  G.operatorActive = true;
+  G.operatorTicksLeft = 7;
+
+  // 경고 오버레이 표시
+  const warn = document.getElementById('operator-warning');
+  warn.classList.add('show');
+
+  // 차트 황금 번쩍 이펙트
+  const cw = document.getElementById('chart-wrap');
+  cw.classList.add('fever');
+
+  // 5배 빠른 틱 (기존 1000ms → 200ms 간격)
+  if (operatorFastTicker) clearInterval(operatorFastTicker);
+  operatorFastTicker = setInterval(() => {
+    if (!G.operatorActive) { clearInterval(operatorFastTicker); operatorFastTicker = null; return; }
+    G.price = nextPrice(G.price);
+    G.history.push(G.price);
+    if (G.history.length > G.maxHist) G.history.shift();
+    // 마진콜 체크
+    if (G.shares > 0) {
+      const levData = getLeveragedData();
+      if (levData.pct <= -100 || levData.currentEval <= 0) {
+        G.cash = 0; G.shares = 0; G.avgPrice = 0;
+        document.getElementById('btn-buy').disabled = false;
+        document.getElementById('btn-sell').disabled = true;
+        flash('rgba(255,23,68,0.7)');
+        showToast('💥 강제 청산(Margin Call)!', '수익률 -100% 도달로 자산이 강제 소멸되었습니다.', 'loss', 5000);
+        document.body.classList.remove('hard-shake'); void document.body.offsetWidth; document.body.classList.add('hard-shake');
+        setTimeout(() => document.body.classList.remove('hard-shake'), 600);
+      }
+    }
+    updateUI();
+  }, 200);
+
+  // 7초 후 종료
+  setTimeout(() => {
+    G.operatorActive = false;
+    warn.classList.remove('show');
+    cw.classList.remove('fever');
+    if (operatorFastTicker) { clearInterval(operatorFastTicker); operatorFastTicker = null; }
+  }, 7000);
+}
+
+/* ── 거짓뉴스 이벤트 ── */
+function triggerFakeNews() {
+  // 호재 뉴스 즉시 취소
+  G.newsActive = false;
+  G.newsIsBull = false;
+  G.newsTicksLeft = 0;
+  G.buyLockoutActive = false;
+
+  // 주가 즉시 20~40% 폭락
+  const dropRate = 0.20 + Math.random() * 0.20;
+  G.price = Math.round(Math.max(100, G.price * (1 - dropRate)));
+  G.history.push(G.price);
+  if (G.history.length > G.maxHist) G.history.shift();
+
+  // 핏빛 플래시 + 차트 패닉 흔들기
+  const flashEl = document.getElementById('flash');
+  flashEl.className = 'blood';
+  flashEl.style.opacity = '1';
+  setTimeout(() => { flashEl.className = ''; flashEl.style.opacity = '0'; }, 520);
+
+  const cw = document.getElementById('chart-wrap');
+  cw.classList.remove('panic'); void cw.offsetWidth; cw.classList.add('panic');
+  setTimeout(() => cw.classList.remove('panic'), 580);
+
+  // 거짓뉴스 배너 표시
+  const banner = document.getElementById('news-banner');
+  document.getElementById('news-tag').textContent = '🚨 [속보] 거짓 선동 뉴스 발각';
+  document.getElementById('news-headline').textContent = '이전 호재 뉴스는 작전 세력의 \'거짓 선동\'으로 밝혀져... 금감원 조사 착수';
+  document.getElementById('news-effect').textContent = `▼▼ 즉시 ${Math.round(dropRate * 100)}% 수직 낙하 발생`;
+  banner.className = 'show bear massive fake';
+
+  if (newsHideTimer) clearTimeout(newsHideTimer);
+  newsHideTimer = setTimeout(() => { banner.className = ''; scheduleNews(); }, 6000);
+
+  updateUI();
+}
+
 /* LOOP & 마진콜(강제청산) 로직 */
 let lastTick = Date.now();
 function loop() {
   const now = Date.now();
   if (now - lastTick >= 1000) {
-    G.price = nextPrice(G.price);
-    G.history.push(G.price);
-    if (G.history.length > G.maxHist) G.history.shift();
+    // 작전세력 발동 중엔 별도 인터벌이 처리하므로 일반 틱 스킵
+    if (!G.operatorActive) {
+      G.price = nextPrice(G.price);
+      G.history.push(G.price);
+      if (G.history.length > G.maxHist) G.history.shift();
+    }
     lastTick = now;
 
-    if (G.shares > 0) {
+    if (G.shares > 0 && !G.operatorActive) {
       const levData = getLeveragedData();
 
       if (levData.pct <= -100 || levData.currentEval <= 0) {
@@ -894,6 +1424,27 @@ function loop() {
         void document.body.offsetWidth;
         document.body.classList.add('hard-shake');
         setTimeout(() => document.body.classList.remove('hard-shake'), 600);
+      }
+    }
+
+    // ── 작전세력 발동 확률 체크 (매수 중, 이벤트 없을 때만) ──
+    if (G.shares > 0 && !G.operatorActive && !G.newsActive) {
+      // 총자산 기준 (매수 중엔 cash=0이므로 평가금 포함해야 발동됨)
+      const levDataOp = getLeveragedData();
+      const totalAssetsOp = G.cash + (G.shares > 0 ? Math.max(0, levDataOp.currentEval) : 0);
+      let opChance = 0;
+      if (totalAssetsOp >= 10000000000) opChance = 0.05;
+      else if (totalAssetsOp >= 1000000000) opChance = 0.02;
+      else if (totalAssetsOp >= 100000000) opChance = 0.01;
+      if (opChance > 0 && Math.random() < opChance) {
+        triggerOperatorEvent();
+      }
+    }
+
+    // ── 거짓뉴스 발동 확률 체크 (호재 뉴스 발동 중, 매수 중일 때) ──
+    if (G.newsActive && G.newsIsBull && G.shares > 0 && !G.operatorActive) {
+      if (Math.random() < 0.03) {
+        triggerFakeNews();
       }
     }
 
